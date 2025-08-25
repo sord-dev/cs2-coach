@@ -1,0 +1,27 @@
+# Cloudflare Workers configuration for CS2 AI Coach
+name = "cs2-coach"
+main = "dist/worker.js"
+compatibility_date = "2024-05-15"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# Public environment variables (non-sensitive)
+LEETIFY_API_BASE_URL = "https://api-public.cs-prod.leetify.com"
+LEETIFY_API_RATE_LIMIT_MS = "1000"
+DISABLE_AI = "true"
+
+# Use 'wrangler secret put <NAME>' to add sensitive variables:
+# wrangler secret put LEETIFY_API_KEY  # if needed in future
+
+# Uncomment and configure for custom domain:
+# [[routes]]
+# pattern = "cs2-coach.your-domain.com/*"
+# zone_name = "your-domain.com"
+
+[build]
+command = "npm run build"
+
+# Resource limits (not available on free plan)
+# [limits]
+# cpu_ms = 30000  # 30 seconds for complex statistical calculations  
+# memory_mb = 256

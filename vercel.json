@@ -1,0 +1,22 @@
+{
+  "functions": {
+    "src/http-server.ts": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "routes": [
+    {
+      "src": "/health",
+      "dest": "/src/http-server.ts"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "/src/http-server.ts"
+    }
+  ],
+  "env": {
+    "LEETIFY_API_BASE_URL": "https://api-public.cs-prod.leetify.com",
+    "LEETIFY_API_RATE_LIMIT_MS": "1000",
+    "DISABLE_AI": "true"
+  }
+}

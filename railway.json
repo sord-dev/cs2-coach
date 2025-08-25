@@ -1,0 +1,24 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "npm run build"
+  },
+  "deploy": {
+    "startCommand": "npm run start:http",
+    "healthcheckPath": "/health",
+    "healthcheckTimeout": 300
+  },
+  "environments": {
+    "production": {
+      "variables": {
+        "LEETIFY_API_BASE_URL": "https://api-public.cs-prod.leetify.com",
+        "LEETIFY_API_RATE_LIMIT_MS": "1000",
+        "DISABLE_AI": "false",
+        "OLLAMA_BASE_URL": "http://localhost:11434",
+        "OLLAMA_MODEL": "cs2-coach",
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}
