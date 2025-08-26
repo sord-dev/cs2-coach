@@ -18,15 +18,11 @@ jobs:
           node-version: '20'
       - name: Install dependencies
         run: npm ci
+      - name: Run tests
+        run: npm test
       - name: Build project
         run: npm run build
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          # Uncomment if you want to specify a wrangler version
-          # wranglerVersion: '3.14.1'
-          # Uncomment if you need to specify a working directory
-          # workingDirectory: 'dist'
-          # Uncomment if you need to specify accountId from secrets
-          # accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
