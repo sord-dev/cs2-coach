@@ -1,32 +1,94 @@
-# CS2 AI Coach - Statistical Analysis Engine
+<div style={{display:'flex',alignItems:'center',gap:'0.5em',marginTop:'-1em',marginBottom:'0.5em'}}>
+  <img src="./assets/banner.png" alt="CS2 AI Coach Banner" style={{height:'2.5em',verticalAlign:'middle'}}/>
+  <span style={{fontSize:'1.5em',fontWeight:'bold'}}>CS2 AI Coach</span>
+  <span style={{fontSize:'1em',fontWeight:'normal',color:'#888',marginLeft:'0.5em'}}>Statistical Analysis Engine</span>
+</div>
 
-<center>
-<img src="/assets/banner.png" alt="CS2 AI Coach Banner" />
+<div style={{
+  background: 'linear-gradient(90deg, #1e293b 0%, #334155 100%)',
+  color: '#fff',
+  borderRadius: '1em',
+  padding: '1.5em',
+  margin: '1.5em 0',
+  boxShadow: '0 4px 24px #0002',
+  textAlign: 'center',
+  fontSize: '1.2em',
+}}>
+  <b>⚡ Fast, privacy-first Counter-Strike 2 coaching assistant</b><br/>
+  <span style={{fontSize:'1.1em'}}>Advanced statistical analysis & <span style={{color:'#38bdf8'}}>optional local AI</span>.<br/>Deploy as an MCP server or HTTP API in minutes.</span>
+</div>
 
-> A fast, privacy-first Counter-Strike 2 coaching assistant providing advanced statistical analysis and optional AI commentary. Available as both an MCP server and a deployed HTTP API. 
-</center>
+<details>
+<summary><b>✨ What can it do?</b></summary>
 
-**Current Status**: ✅ **Production Ready**
+- <b>Personalized coaching advice</b> with research-validated stats
+- <b>Flow state & tilt detection</b> for peak performance
+- <b>Actionable practice routines</b> and improvement tracking
+- <b>Deploy anywhere</b>: Cloudflare, local, or integrate with Claude Desktop
 
-## 🚀 Quick Start
+</details>
 
-- **Use the Deployed HTTP API:**
-  - See [HTTP API Documentation](docs/http-api-docs.md) for endpoints, usage, and deployment instructions.
-- **Run Locally (MCP Server or HTTP API):**
-  - See [Architecture & Setup](docs/architecture.md) for local development, environment setup, and deployment options.
+<div style={{display:'flex',gap:'2em',flexWrap:'wrap',margin:'2em 0'}}>
+  <div style={{flex:'1 1 300px',background:'#f1f5f9',borderRadius:'1em',padding:'1.2em',boxShadow:'0 2px 8px #0001'}}>
+    <b>🚀 Quick Start</b><br/>
+    <ul>
+      <li><b>Try the HTTP API:</b> <a href="docs/http-api-docs.md">API Docs & Tutorial</a></li>
+      <li><b>Run Locally:</b> <a href="docs/architecture.md">Setup & Architecture</a></li>
+    </ul>
+  </div>
+  <div style={{flex:'1 1 300px',background:'#f1f5f9',borderRadius:'1em',padding:'1.2em',boxShadow:'0 2px 8px #0001'}}>
+    <b>📚 Documentation</b><br/>
+    <ul>
+      <li><a href="docs/analysis-methadology.md">Analysis Methodology</a></li>
+      <li><a href="docs/http-api-docs.md">HTTP API Reference</a></li>
+      <li><a href="docs/mcp-api-docs.md">MCP API Reference</a></li>
+      <li><a href="docs/architecture.md">System Architecture</a></li>
+    </ul>
+  </div>
+</div>
 
-## 📚 Documentation
+---
 
-- **Analysis Methodology:** [docs/analysis-methadology.md](docs/analysis-methadology.md)
-- **HTTP API Reference & Tutorial:** [docs/http-api-docs.md](docs/http-api-docs.md)
-- **MCP API Reference:** [docs/mcp-api-docs.md](docs/mcp-api-docs.md)
-- **System Architecture & Setup:** [docs/architecture.md](docs/architecture.md)
+## 🤖 Enable Local AI (Ollama)
+
+<div style={{background:'#fef9c3',border:'1px solid #fde68a',borderRadius:'0.7em',padding:'1em',margin:'1em 0'}}>
+<b>Optional:</b> For AI-powered commentary and deeper insights, you can run a local Ollama model.<br/>
+<b>Statistical analysis works out of the box without AI!</b>
+</div>
+
+**1. Download & Install Ollama**<br/>
+<a href="https://ollama.ai/download" target="_blank"><img src="https://ollama.ai/public/ollama-logo.svg" alt="Ollama Logo" style={{height:'2em',verticalAlign:'middle'}}/> Download Ollama</a><br/>
+Follow the instructions for your OS (Windows, Mac, Linux).
+
+**2. Start Ollama**
+```bash
+ollama serve
+```
+
+**3. Create the CS2 Coach Model**
+```bash
+ollama create cs2-coach -f ./modelfiles/cs2-coach-enhanced.modelfile
+```
+
+**4. Configure your `.env`**
+```env
+DISABLE_AI=false
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=cs2-coach
+```
+
+<details>
+<summary><b>💡 Need help?</b></summary>
+See <a href="docs/architecture.md">Architecture & Setup</a> for troubleshooting and advanced configuration.
+</details>
+
+---
 
 ## 🧪 Testing & Development
 
-- Run all tests: `npm test` (see [architecture.md](docs/architecture.md) for more)
-- Lint/typecheck: `npm run lint` / `npm run typecheck`
-- Start dev server: `npm run dev`
+- <b>Run all tests:</b> <code>npm test</code> (see <a href="docs/architecture.md">architecture.md</a> for more)
+- <b>Lint/typecheck:</b> <code>npm run lint</code> / <code>npm run typecheck</code>
+- <b>Start dev server:</b> <code>npm run dev</code>
 
 ## 📄 License
 
@@ -34,11 +96,11 @@ MIT License - see LICENSE file for details.
 
 ## 🙋 Support
 
-For troubleshooting, health checks, and advanced usage, see the [docs/](docs/) directory and open an issue if needed.
+For troubleshooting, health checks, and advanced usage, see the <a href="docs/">docs/</a> directory and open an issue if needed.
 
 ## 🔗 Related Links
 
-- [MCP Protocol Specification](https://modelcontextprotocol.io/specification/2025-06-18)
-- [Ollama Documentation](https://github.com/ollama/ollama)
-- [Leetify API Documentation](https://api-public-docs.cs-prod.leetify.com/)
-- [TypeScript SDK for MCP](https://github.com/modelcontextprotocol/typescript-sdk)
+- <a href="https://modelcontextprotocol.io/specification/2025-06-18">MCP Protocol Specification</a>
+- <a href="https://github.com/ollama/ollama">Ollama Documentation</a>
+- <a href="https://api-public-docs.cs-prod.leetify.com/">Leetify API Documentation</a>
+- <a href="https://github.com/modelcontextprotocol/typescript-sdk">TypeScript SDK for MCP</a>
