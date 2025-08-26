@@ -38,7 +38,7 @@
     "gaming",
     "typescript"
   ],
-  "author": "CS2 Coach Team",
+  "author": "sord-dev",
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.3",

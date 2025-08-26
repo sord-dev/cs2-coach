@@ -7,6 +7,164 @@ jest.mock('node-fetch');
 const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
 
 describe('LeetifyAPIClient', () => {
+  describe('getMatchDetails', () => {
+    const mockMatchDetail = {
+      id: 'match1',
+      finished_at: '2024-08-15T10:00:00Z',
+      map_name: 'de_dust2',
+      data_source: 'competitive',
+      duration: 3600,
+      playerId: '12345',
+      stats: [
+        {
+          steam64_id: '12345',
+          total_kills: 25,
+          total_deaths: 15,
+          total_assists: 5,
+          dpr: 85.5,
+          leetify_rating: 1.25,
+          total_hs_kills: 10,
+        },
+      ],
+      team_scores: [
+        { team_number: 2, score: 16 },
+        { team_number: 3, score: 10 },
+      ],
+    };
+    test('should fetch and transform match details successfully', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockMatchDetail,
+        headers: {} as any,
+        statusText: '',
+      } as any);
+      const result = await client.getMatchDetails('match1');
+      expect(result).toHaveProperty('gameId', 'match1');
+      expect(result).toHaveProperty('map', 'de_dust2');
+      expect(result.playerStats).toHaveProperty('kills', 25);
+    });
+    test('should use cache for match details', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockMatchDetail,
+        headers: {} as any,
+        statusText: '',
+      } as any);
+      await client.getMatchDetails('match1');
+      // Second call should use cache
+      const result = await client.getMatchDetails('match1');
+      expect(result).toHaveProperty('gameId', 'match1');
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+    test('should throw on API error', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: 'Not Found',
+        headers: {} as any,
+      } as any);
+      await expect(client.getMatchDetails('badid')).rejects.toThrow('Failed to fetch match details');
+    });
+  });
+
+  describe('getImprovementData', () => {
+    const mockImprovementData = {
+      matches: [
+        {
+          gameId: 'match2',
+          date: '2024-08-16T10:00:00Z',
+          map: 'de_inferno',
+          gameMode: 'competitive',
+          durationSeconds: 3500,
+          playerStats: [
+            {
+              steamId: '12345',
+              kills: 20,
+              deaths: 10,
+              assists: 7,
+              adr: 90.5,
+              kast: 80,
+              rating: 1.35,
+              headshots: 12,
+              headshotPercentage: 60,
+              mvps: 4,
+            },
+          ],
+          teamStats: {
+            roundsWon: 16,
+            roundsLost: 8,
+            score: 16,
+            side: 't',
+          },
+        },
+      ],
+    };
+    test('should fetch and transform improvement data successfully', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockImprovementData,
+        headers: {} as any,
+        statusText: '',
+      } as any);
+      const result = await client.getImprovementData('12345', '2024-08-01', '2024-08-31', 1);
+      expect(result).toHaveLength(1);
+      expect(result[0]).toHaveProperty('gameId', 'match2');
+    });
+    test('should use cache for improvement data', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockImprovementData,
+        headers: {} as any,
+        statusText: '',
+      } as any);
+      await client.getImprovementData('12345', '2024-08-01', '2024-08-31', 1);
+      // Second call should use cache
+      const result = await client.getImprovementData('12345', '2024-08-01', '2024-08-31', 1);
+      expect(result).toHaveLength(1);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+    test('should throw on API error', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        statusText: 'Server Error',
+        headers: {} as any,
+      } as any);
+      await expect(client.getImprovementData('badid', '2024-08-01', '2024-08-31', 1)).rejects.toThrow('Failed to fetch improvement data');
+    });
+  });
+
+  describe('getRankBenchmarks', () => {
+    test('should return fallback benchmarks and cache them', async () => {
+      const result = await client.getRankBenchmarks('mg');
+      expect(result).toBeDefined();
+      // Second call should use cache
+      const result2 = await client.getRankBenchmarks('mg');
+      expect(result2).toBe(result);
+    });
+  });
+
+  describe('transformMatchData edge cases', () => {
+    test('should handle missing stats and invalid date', () => {
+      // @ts-ignore: access private
+      const transformMatchData = client.transformMatchData.bind(client);
+      const match = { id: 'm1', playerStats: null, date: 'not-a-date' };
+      const result = transformMatchData(match, 'p1');
+      expect(result).toHaveProperty('gameId', 'm1');
+      expect(result.date).not.toBe('not-a-date');
+    });
+    test('should handle missing team scores', () => {
+      // @ts-ignore: access private
+      const transformMatchData = client.transformMatchData.bind(client);
+      const match = { id: 'm2', playerStats: {}, date: '2024-08-01T00:00:00Z' };
+      const result = transformMatchData(match, 'p2');
+      expect(result.teamStats.roundsWon).toBe(0);
+    });
+  });
   let client: LeetifyAPIClient;
 
   const mockPlayerData = {

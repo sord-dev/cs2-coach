@@ -174,20 +174,40 @@ export class OllamaCoachService {
 			if (!aiResponse || aiResponse.trim() === '') {
 				throw new OllamaError('Empty response received from Ollama', this.config.model);
 			}
-			try {
-				const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-				if (!jsonMatch) throw new Error('No JSON found in AI response');
-				const parsed = JSON.parse(jsonMatch[0]);
-						return {
-							analysis,
-							recommendations: this.validateRecommendations(parsed.recommendations || []),
-							practiceRoutine: this.validatePracticeRoutine(parsed.practiceRoutine || {}),
-							confidence: 0.85,
-							generatedAt: new Date(),
-							summary: parsed.summary,
-							keyFindings: parsed.keyFindings,
-							nextSteps: parsed.nextSteps,
-						};
+			   try {
+				   // DEBUG: Log the AI response and regex match
+				   // eslint-disable-next-line no-console
+				   console.log('parseCoachingResponse DEBUG aiResponse:', aiResponse);
+				   const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+				   // eslint-disable-next-line no-console
+				   console.log('parseCoachingResponse DEBUG jsonMatch:', jsonMatch);
+				   if (!jsonMatch) throw new Error('No JSON found in AI response');
+				   const parsed = JSON.parse(jsonMatch[0]);
+						   return {
+							   analysis: analysis && Object.keys(analysis).length > 0 ? analysis : {
+								   playerId: '',
+								   timeRange: '',
+								   averageStats: {
+									   rating: 0,
+									   kdRatio: 0,
+									   adr: 0,
+									   kast: 0,
+									   headshotPercentage: 0,
+									   gamesPlayed: 0,
+								   },
+								   recentPerformance: [],
+								   strengths: [],
+								   weaknesses: [],
+								   trends: [],
+							   },
+							   recommendations: this.validateRecommendations(parsed.recommendations || []),
+							   practiceRoutine: this.validatePracticeRoutine(parsed.practiceRoutine || {}),
+							   confidence: 0.85,
+							   generatedAt: new Date(),
+							   summary: parsed.summary,
+							   keyFindings: parsed.keyFindings,
+							   nextSteps: parsed.nextSteps,
+						   };
 			} catch (error) {
 				throw wrapOllamaError(
 					error instanceof Error
@@ -199,7 +219,23 @@ export class OllamaCoachService {
 		}
 
 	private parseSpecificAreaResponse(aiResponse: string, _area: string): CoachingResponse {
-		return this.parseCoachingResponse(aiResponse, {} as PlayerAnalysis);
+		// Provide a valid minimal PlayerAnalysis object
+		return this.parseCoachingResponse(aiResponse, {
+			playerId: '',
+			timeRange: '',
+			averageStats: {
+				rating: 0,
+				kdRatio: 0,
+				adr: 0,
+				kast: 0,
+				headshotPercentage: 0,
+				gamesPlayed: 0,
+			},
+			recentPerformance: [],
+			strengths: [],
+			weaknesses: [],
+			trends: [],
+		});
 	}
 
 	private parseImprovementResponse(aiResponse: string, _trends: any): CoachingResponse {
@@ -268,24 +304,34 @@ Format your response as structured coaching insights that are easy to understand
 	}
 
 	private validateRecommendations(recommendations: any[]): CoachingRecommendation[] {
-		return recommendations.map(rec => ({
-			category: rec.category || 'general',
-			priority: rec.priority || 'medium',
-			title: rec.title || 'Focus Area',
-			description: rec.description || 'Improve your gameplay',
-			actionItems: Array.isArray(rec.actionItems) ? rec.actionItems : ['Practice regularly'],
-			expectedImprovement: rec.expectedImprovement || 'Gradual skill improvement',
-		}));
+		   if (!Array.isArray(recommendations) || recommendations.length === 0) {
+			   return [{
+				   category: 'general',
+				   priority: 'medium',
+				   title: 'Focus Area',
+				   description: 'Improve your gameplay',
+				   actionItems: ['Practice regularly'],
+				   expectedImprovement: 'Gradual skill improvement',
+			   }];
+		   }
+		   return recommendations.map(rec => ({
+			   category: rec.category || 'general',
+			   priority: rec.priority || 'medium',
+			   title: rec.title || 'Focus Area',
+			   description: rec.description || 'Improve your gameplay',
+			   actionItems: Array.isArray(rec.actionItems) ? rec.actionItems : ['Practice regularly'],
+			   expectedImprovement: rec.expectedImprovement || 'Gradual skill improvement',
+		   }));
 	}
 
 	private validatePracticeRoutine(routine: any): PracticeRoutine {
-		return {
-			warmup: Array.isArray(routine.warmup) ? routine.warmup : ['Deathmatch for 15 minutes'],
-			aimTraining: Array.isArray(routine.aimTraining) ? routine.aimTraining : ['Aim_botz practice'],
-			mapPractice: Array.isArray(routine.mapPractice) ? routine.mapPractice : ['Learn common angles'],
-			tacticalReview: Array.isArray(routine.tacticalReview) ? routine.tacticalReview : ['Watch pro demos'],
-			estimatedTime: typeof routine.estimatedTime === 'number' ? routine.estimatedTime : 60,
-		};
+		   return {
+			   warmup: Array.isArray(routine.warmup) ? routine.warmup : ['Deathmatch for 15 minutes'],
+			   aimTraining: Array.isArray(routine.aimTraining) ? routine.aimTraining : ['Aim_botz practice'],
+			   mapPractice: Array.isArray(routine.mapPractice) ? routine.mapPractice : ['Learn common angles'],
+			   tacticalReview: Array.isArray(routine.tacticalReview) ? routine.tacticalReview : ['Watch pro demos'],
+			   estimatedTime: typeof routine.estimatedTime === 'number' ? routine.estimatedTime : 60,
+		   };
 	}
 
 	private createFallbackResponse(analysis: PlayerAnalysis, rawResponse: string): CoachingResponse {

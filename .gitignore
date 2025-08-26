@@ -11,3 +11,6 @@ dist
 # AI Agent Context removed
 .claude/*.local.*
 /PRPs
+
+# test output files
+/coverage

@@ -7,8 +7,116 @@ class SimpleMockOllamaClient {
 }
 
 describe('OllamaCoachService', () => {
+  it('analyzeSpecificArea returns parsed advice', async () => {
+    mockOllama.generate.mockResolvedValueOnce(validAIResponse);
+    const req = {
+      playerId: 'player123',
+      area: 'aim',
+      analysis: {
+        averageStats: {
+          rating: 1,
+          kdRatio: 1,
+          adr: 1,
+          kast: 1,
+          headshotPercentage: 1,
+          gamesPlayed: 1,
+        },
+      },
+      playerProfile: mockPlayerProfile
+    };
+    const result = await service.analyzeSpecificArea(req);
+    expect(result).toHaveProperty('recommendations');
+  });
+
+  it('analyzeImprovement returns parsed advice', async () => {
+    mockOllama.generate.mockResolvedValueOnce(validAIResponse);
+    const req = { playerId: 'player123', trends: {} };
+    const result = await service.analyzeImprovement(req);
+    expect(result).toHaveProperty('recommendations');
+  });
+
+  it('analyzeRankComparison returns parsed advice', async () => {
+    mockOllama.generate.mockResolvedValueOnce(validAIResponse);
+  const req = { playerId: 'player123', targetRank: 'LEM', comparison: {}, playerProfile: mockPlayerProfile };
+    const result = await service.analyzeRankComparison(req);
+    expect(result).toHaveProperty('recommendations');
+  });
+
+  it('analyzeEnhancedData returns enhanced summary and keyFindings', async () => {
+    mockOllama.generate.mockResolvedValueOnce(validAIResponse);
+  const req = { playerId: 'player123', enhancedAnalysis: {}, basicAnalysis: {}, playerProfile: mockPlayerProfile, components: ['aim', 'utility'] };
+    const result = await service.analyzeEnhancedData(req);
+    expect(result.summary).toMatch(/Enhanced statistical analysis/);
+  expect(result.keyFindings?.[0]).toMatch(/Advanced statistical analysis/);
+  });
+
+  it('parseCoachingResponse throws on no JSON in response', () => {
+    // @ts-ignore: access private
+    expect(() => service.parseCoachingResponse('no json here', {})).toThrow(/No JSON found/);
+  });
+
+  it('parseCoachingResponse handles missing recommendations and practiceRoutine', () => {
+    // @ts-ignore: access private
+    const minimal = JSON.stringify({ summary: 's', keyFindings: [], nextSteps: 'n' });
+    // @ts-ignore: access private
+    const result = service.parseCoachingResponse(minimal, {});
+    expect(result.recommendations[0]).toHaveProperty('category');
+    expect(result.practiceRoutine).toHaveProperty('warmup');
+  });
+
+  it('createFallbackResponse returns fallback structure', () => {
+    // @ts-ignore: access private
+    const result = service.createFallbackResponse({}, 'raw');
+    expect(result.recommendations[0].description).toMatch(/raw/);
+    expect(result.practiceRoutine).toHaveProperty('warmup');
+  });
+
+  it('queueRequest handles multiple requests in order', async () => {
+    let order: string[] = [];
+    const s = new OllamaCoachService({ generate: async () => validAIResponse });
+    const p1 = s['queueRequest'](() => Promise.resolve(order.push('a')));
+    const p2 = s['queueRequest'](() => Promise.resolve(order.push('b')));
+    await Promise.all([p1, p2]);
+    expect(order).toEqual(['a', 'b']);
+  });
+
+  it('validateRecommendations handles malformed input', () => {
+    // @ts-ignore: access private
+    const result = service.validateRecommendations([{}, { title: 't' }]);
+    expect(result[0]).toHaveProperty('title');
+    expect(result[1].title).toBe('t');
+  });
+
+  it('validatePracticeRoutine handles malformed input', () => {
+    // @ts-ignore: access private
+    const result = service.validatePracticeRoutine({});
+    expect(result).toHaveProperty('warmup');
+    expect(result).toHaveProperty('aimTraining');
+  });
   let service: OllamaCoachService;
   let mockOllama: SimpleMockOllamaClient;
+
+  const mockPlayerProfile = {
+    steam64_id: '76561198000000000',
+    id: 'player123',
+    name: 'TestPlayer',
+    total_matches: 100,
+    winrate: 55,
+    first_match_date: '2022-01-01',
+    bans: [],
+    ranks: {
+      leetify: 10,
+      premier: 5,
+      faceit: 3,
+      faceit_elo: 2000,
+      wingman: 2,
+      renown: null,
+      competitive: [{ map_name: 'de_dust2', rank: 10 }],
+    },
+    rating: { overall: 1.15 },
+    stats: { kd: 1.25, adr: 78.5, kast: 72, headshotPercentage: 36 },
+    recent_teammates: [],
+  };
 
   const mockRequest = {
     playerId: 'player123',
@@ -32,16 +140,7 @@ describe('OllamaCoachService', () => {
       weaknesses: ['Improve utility usage'],
       trends: [],
     },
-    playerProfile: {
-      steamId: 'player123',
-      nickname: 'TestPlayer',
-      leetifyRating: 1.15,
-      rank: 'DMG',
-      gamesCount: 100,
-      averageRating: 1.12,
-      kdRatio: 1.25,
-      winRate: 55,
-    },
+  playerProfile: mockPlayerProfile,
   };
 
   const validAIResponse = {
