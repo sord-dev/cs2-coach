@@ -163,12 +163,12 @@ export class OllamaCoachService {
 					stream: false,
 				});
 				if (!response || typeof response.response !== 'string') {
-					console.log('Ollama API invalid response:', response);
+					// Invalid response from Ollama
 					throw new OllamaError('No valid response from Ollama', this.config.model);
 				}
 				return response.response;
 			} catch (error: any) {
-				console.log('Ollama API error object:', error);
+				// Log error for debugging
 				await this.logOllamaErrorBody(error);
 				throw wrapOllamaError(error, this.config.model);
 			}
@@ -180,12 +180,8 @@ export class OllamaCoachService {
 				throw new OllamaError('Empty response received from Ollama', this.config.model);
 			}
 			   try {
-				   // DEBUG: Log the AI response and regex match
-				   // eslint-disable-next-line no-console
-				   console.log('parseCoachingResponse DEBUG aiResponse:', aiResponse);
+				   // Parse JSON from AI response
 				   const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-				   // eslint-disable-next-line no-console
-				   console.log('parseCoachingResponse DEBUG jsonMatch:', jsonMatch);
 				   if (!jsonMatch) throw new Error('No JSON found in AI response');
 				   const parsed = JSON.parse(jsonMatch[0]);
 						   return {

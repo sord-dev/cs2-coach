@@ -3,6 +3,7 @@
 
 
 import fetch from 'node-fetch';
+import type { RequestInit, Response } from 'node-fetch';
 import { sleep, SimpleCache, getCS2RankBenchmarks, determineCSRank } from '../../utils/helpers.js';
 
 import type {
@@ -17,43 +18,57 @@ import { LeetifyAPIError } from '../../types/index.js';
 
 
 // Stat calculation helpers (inlined from stats.ts)
-export function calculateKAST(playerStats: any): number {
-	const roundsCount = playerStats.rounds_count || 30;
-	const kills = playerStats.total_kills || playerStats.kills || 0;
-	const assists = playerStats.total_assists || playerStats.assists || 0;
-	const roundsSurvived = playerStats.rounds_survived || 0;
+
+/**
+ * Calculates KAST, supporting both real API and test/mock field names.
+ * @param playerStats RawPlayerStats or test mock object
+ */
+export function calculateKAST(playerStats: RawPlayerStats): number {
+	// Support both snake_case (API) and camelCase (test mocks)
+	const roundsCount = playerStats.rounds_count ?? (playerStats as any).roundsCount ?? 30;
+	const kills = playerStats.total_kills ?? (playerStats as any).kills ?? 0;
+	const assists = playerStats.total_assists ?? (playerStats as any).assists ?? 0;
+	const roundsSurvived = playerStats.rounds_survived ?? (playerStats as any).roundsSurvived ?? 0;
 	const impactRounds = Math.min(kills + assists + roundsSurvived, roundsCount);
 	return roundsCount > 0 ? (impactRounds / roundsCount) * 100 : 0;
 }
 
-export function calculateHeadshotPercentage(playerStats: any): number {
-	const totalKills = playerStats.total_kills || playerStats.kills || 0;
-	const headshotKills = playerStats.total_hs_kills || playerStats.headshots || 0;
+
+/**
+ * Calculates headshot percentage, supporting both real API and test/mock field names.
+ * @param playerStats RawPlayerStats or test mock object
+ */
+export function calculateHeadshotPercentage(playerStats: RawPlayerStats): number {
+	// Support both snake_case (API) and camelCase (test mocks)
+	const totalKills = playerStats.total_kills ?? (playerStats as any).kills ?? 0;
+	const headshotKills = playerStats.total_hs_kills ?? (playerStats as any).headshots ?? 0;
 	if (totalKills === 0) return 0;
 	return (headshotKills / totalKills) * 100;
 }
 
-export function determineSide(playerStats: any): 'ct' | 't' {
+export function determineSide(playerStats: RawPlayerStats): 'ct' | 't' {
 	const teamNumber = playerStats.initial_team_number;
 	if (teamNumber === 2) return 't';
 	if (teamNumber === 3) return 'ct';
 	return 'ct';
 }
 
-interface QueuedRequest {
-	url: string;
-	options?: any;
-	resolve: (value: any) => void;
-	reject: (reason: any) => void;
-	retryCount: number;
-}
+	interface QueuedRequest {
+		url: string;
+		options?: RequestInit;
+		resolve: (value: Response) => void;
+		reject: (reason: unknown) => void;
+		retryCount: number;
+	}
 
 export class LeetifyAPIClient {
 	private readonly config: LeetifyConfig;
 	private requestQueue: QueuedRequest[] = [];
 	private isProcessingQueue = false;
 	private lastRequestTime = 0;
-	private readonly cache = new SimpleCache<any>(1000);
+		private readonly profileCache = new SimpleCache<LeetifyPlayerProfile>(1000);
+		private readonly matchHistoryCache = new SimpleCache<LeetifyMatchData[]>(1000);
+		private readonly matchDetailsCache = new SimpleCache<LeetifyMatchData>(1000);
 
 	constructor() {
 		this.config = {
@@ -64,7 +79,7 @@ export class LeetifyAPIClient {
 		};
 	}
 
-	async testApiConnectivity(): Promise<any> {
+		async testApiConnectivity(): Promise<{ endpoint: string; status?: number; ok?: boolean; headers?: Record<string, string>; error?: string }[]> {
 		console.log('Testing Leetify API connectivity...');
 		const endpointsToTest = [
 			'/', '/health', '/status', '/v3', '/api', '/docs', '/swagger',
@@ -74,7 +89,7 @@ export class LeetifyAPIClient {
 			try {
 				const url = `${this.config.baseUrl}${endpoint}`;
 				console.log(`Testing: ${url}`);
-				const response = await this.queueRequest(url);
+					const response = await this.queueRequest(url);
 				results.push({
 					endpoint,
 					status: response.status,
@@ -102,9 +117,9 @@ export class LeetifyAPIClient {
 		return results;
 	}
 
-	async getPlayerProfile(playerId: string): Promise<LeetifyPlayerProfile> {
+		async getPlayerProfile(playerId: string): Promise<LeetifyPlayerProfile> {
 		const cacheKey = `profile:${playerId}`;
-		const cached = this.cache.get(cacheKey, 30 * 60 * 1000);
+		const cached = this.profileCache.get(cacheKey, 30 * 60 * 1000);
 		if (cached) return cached;
 		const url = `${this.config.baseUrl}/v3/profile?steam64_id=${playerId}`;
 		let response;
@@ -172,14 +187,14 @@ export class LeetifyAPIClient {
 			);
 		}
 		const data = await response.json();
-		this.cache.set(cacheKey, data);
+		this.profileCache.set(cacheKey, data);
 		return this.transformPlayerProfile(data);
 	}
 
-	async getMatchHistory(playerId: string, limit = 10): Promise<LeetifyMatchData[]> {
+		async getMatchHistory(playerId: string, limit = 10): Promise<LeetifyMatchData[]> {
 		if (limit > 50) throw new LeetifyAPIError('Match limit cannot exceed 50');
 		const cacheKey = `matches:${playerId}:${limit}`;
-		const cached = this.cache.get(cacheKey, 30 * 60 * 1000);
+		const cached = this.matchHistoryCache.get(cacheKey, 30 * 60 * 1000);
 		if (cached) return cached;
 		const url = `${this.config.baseUrl}/v3/profile/matches?steam64_id=${playerId}`;
 		const response = await this.queueRequest(url);
@@ -192,13 +207,13 @@ export class LeetifyAPIClient {
 		}
 		const data = await response.json();
 		const transformedData = this.transformMatchHistory(data, playerId, limit);
-		this.cache.set(cacheKey, transformedData);
+		this.matchHistoryCache.set(cacheKey, transformedData);
 		return transformedData;
 	}
 
-	async getMatchDetails(gameId: string): Promise<LeetifyMatchData> {
+		async getMatchDetails(gameId: string): Promise<LeetifyMatchData> {
 		const cacheKey = `match:${gameId}`;
-		const cached = this.cache.get(cacheKey, 60 * 60 * 1000);
+		const cached = this.matchDetailsCache.get(cacheKey, 60 * 60 * 1000);
 		if (cached) return cached;
 		const url = `${this.config.baseUrl}/v2/matches/${gameId}`;
 		const response = await this.queueRequest(url);
@@ -211,14 +226,14 @@ export class LeetifyAPIClient {
 		}
 		const data = await response.json();
 		const transformedData = this.transformMatchDetails(data);
-		this.cache.set(cacheKey, transformedData);
+		this.matchDetailsCache.set(cacheKey, transformedData);
 		return transformedData;
 	}
 
 	async getImprovementData(playerId: string, fromDate: string, toDate: string, limit = 10): Promise<LeetifyMatchData[]> {
 		if (limit > 50) throw new LeetifyAPIError('Match limit cannot exceed 50');
 		const cacheKey = `improvement:${playerId}:${fromDate}:${toDate}:${limit}`;
-		const cached = this.cache.get(cacheKey, 60 * 60 * 1000);
+		const cached = this.matchHistoryCache.get(cacheKey, 60 * 60 * 1000);
 		if (cached) return cached;
 		const url = `${this.config.baseUrl}/v3/profile/matches?steam64_id=${playerId}&from=${fromDate}&to=${toDate}`;
 		const response = await this.queueRequest(url);
@@ -231,17 +246,17 @@ export class LeetifyAPIClient {
 		}
 		const data = await response.json();
 		const transformedData = this.transformMatchHistory(data, playerId, limit);
-		this.cache.set(cacheKey, transformedData);
+		this.matchHistoryCache.set(cacheKey, transformedData);
 		return transformedData;
 	}
 
 	async getRankBenchmarks(rank: string): Promise<any> {
 		const cacheKey = `benchmarks:${rank}`;
-		const cached = this.cache.get(cacheKey, 24 * 60 * 60 * 1000);
+		const cached = this.profileCache.get(cacheKey, 24 * 60 * 60 * 1000);
 		if (cached) return cached;
 		console.warn(`Warning: Using fallback rank benchmarks for ${rank}. The /benchmarks endpoint may not be available in the public API.`);
 		const fallbackBenchmarks = this.getFallbackRankBenchmarks(rank);
-		this.cache.set(cacheKey, fallbackBenchmarks);
+		this.profileCache.set(cacheKey, fallbackBenchmarks);
 		return fallbackBenchmarks;
 	}
 
@@ -323,7 +338,9 @@ export class LeetifyAPIClient {
 	   }
 
 	public clearCache(): void {
-		this.cache.clear();
+		this.profileCache.clear();
+		this.matchHistoryCache.clear();
+		this.matchDetailsCache.clear();
 	}
 
 	private transformPlayerProfile(rawData: any): LeetifyPlayerProfile {
