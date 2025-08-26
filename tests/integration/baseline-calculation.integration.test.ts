@@ -1,5 +1,4 @@
-import { PersonalBaselineCalculator } from '../../src/services/baseline/baseline-calculator';
-import { baselineStorageManager } from '../../src/services/baseline/baseline-storage';
+import { PersonalBaselineCalculator, baselineStorageManager } from '../../src/services/analysis';
 import { createValidExtendedMatchData } from '../test-data';
 import type { LeetifyMatchData, PersonalBaseline } from '../../src/types/index';
 

@@ -4,8 +4,8 @@
  */
 
 import { roundTo } from '../../utils/helpers.js';
-import { STATE_PATTERNS } from '../common/constants.js';
-import { tiltDetector } from '../detection/tilt-detector.js';
+import { STATE_PATTERNS } from '../utils.js';
+import { tiltDetector } from '../analysis/index.js';
 
 import type { LeetifyMatchData, RawPlayerStats, PlayerAnalysis, PersonalBaseline } from '../../types/index.js';
 

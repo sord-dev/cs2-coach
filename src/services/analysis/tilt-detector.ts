@@ -1,6 +1,9 @@
 
+// Moved from detection/tilt-detector.ts
+
+
 import { roundTo } from '../../utils/helpers.js';
-import { TILT_THRESHOLDS, RECOVERY_PATTERNS } from '../common/constants.js';
+import { TILT_THRESHOLDS, RECOVERY_PATTERNS } from '../utils.js';
 import type { PersonalBaseline, TiltAnalysis, ExtendedMatchData, TiltIndicator, PredictionResult } from '../../types/index.js';
 
 /**

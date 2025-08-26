@@ -5,7 +5,7 @@ import {
   areaTargets, 
   TILT_THRESHOLDS,
   STATE_PATTERNS
-} from '../common/constants.js';
+} from '../utils.js';
 
 /**
  * Maps CS2 premier rating to rank tier for adaptive thresholds.

@@ -3,7 +3,7 @@
  * Tests personal baseline calculation with statistical validation
  */
 
-import { PersonalBaselineCalculator } from '../../../../src/services/baseline/baseline-calculator.js';
+import { PersonalBaselineCalculator } from '../../../../src/services/analysis';
 import { createValidLeetifyMatchData, createValidExtendedMatchData } from '../../../test-data';
 
 describe('PersonalBaselineCalculator', () => {

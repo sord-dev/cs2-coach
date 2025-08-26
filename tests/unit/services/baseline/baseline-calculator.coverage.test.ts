@@ -1,4 +1,4 @@
-import { PersonalBaselineCalculator } from '../../../../src/services/baseline/baseline-calculator.js';
+import { PersonalBaselineCalculator } from '../../../../src/services/analysis';
 import { createValidExtendedMatchData } from '../../../test-data';
 
 describe('PersonalBaselineCalculator (coverage)', () => {

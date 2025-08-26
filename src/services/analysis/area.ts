@@ -1,5 +1,5 @@
 // Area-specific insight and recommendation helpers for LeetifyDataTransformer
-import { areaTargets } from '../common/constants.js';
+import { areaTargets } from '../utils.js';
 
 /**
  * Returns the list of area names for which insights can be generated.

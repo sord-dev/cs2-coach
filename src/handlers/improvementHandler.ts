@@ -1,7 +1,8 @@
 import { ImprovementTrackingSchema } from '../types/index.js';
 import { LeetifyAPIClient } from '../services/leetify/index.js';
 import { IAICoachService } from '../services/ollama/interface.js';
-import { LeetifyDataTransformer } from '../services/data-transformer/index.js';
+import { LeetifyDataTransformer } from '../services/analysis/leetify-data-transformer.js';
+
 import { safeJsonStringify } from '../utils/helpers.js';
 
 export class ImprovementHandler {

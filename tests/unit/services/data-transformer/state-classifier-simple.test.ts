@@ -1,9 +1,11 @@
+import { makeRawPlayerStats } from '../../../test-data';
 /**
  * @fileoverview Simple unit tests for PerformanceStateClassifier
  * Tests basic functionality and ensures no crashes
  */
 
-import { PerformanceStateClassifier } from '../../../../src/services/analysis/state-classifier.js';
+import { PerformanceStateClassifier } from '../../../../src/services/analysis';
+import type { PerformanceTrend } from '../../../../src/types/analysis';
 
 describe('PerformanceStateClassifier - Basic Tests', () => {
   let classifier: PerformanceStateClassifier;
@@ -14,6 +16,7 @@ describe('PerformanceStateClassifier - Basic Tests', () => {
 
   const createMockAnalysis = (rating: number = 1.0) => ({
     playerId: 'test-player',
+    timeRange: 'recent',
     averageStats: {
       rating: rating,
       kdRatio: 1.2,
@@ -23,18 +26,25 @@ describe('PerformanceStateClassifier - Basic Tests', () => {
       gamesPlayed: 5
     },
     recentPerformance: [
-      { rating: rating, kdRatio: 1.2, adr: 75, kast: 70 },
-      { rating: rating + 0.1, kdRatio: 1.3, adr: 80, kast: 75 },
-      { rating: rating - 0.1, kdRatio: 1.1, adr: 70, kast: 65 }
+      { rating: rating, kdRatio: 1.2, adr: 75, kast: 70, headshotPercentage: 35, gamesPlayed: 5 },
+      { rating: rating + 0.1, kdRatio: 1.3, adr: 80, kast: 75, headshotPercentage: 36, gamesPlayed: 5 },
+      { rating: rating - 0.1, kdRatio: 1.1, adr: 70, kast: 65, headshotPercentage: 34, gamesPlayed: 5 }
     ],
     strengths: ['Good aim'],
     weaknesses: ['Positioning'],
-    trends: ['Improving']
+    trends: [
+      {
+        metric: 'rating',
+        trend: 'improving' as PerformanceTrend['trend'],
+        changePercentage: 5,
+        description: 'Rating is improving over recent matches.'
+      }
+    ] as PerformanceTrend[]
   });
 
   const mockBaseline = {
     value: 1.0,
-    confidenceInterval: [0.9, 1.1],
+    confidenceInterval: [0.9, 1.1] as [number, number],
     sampleSize: 20,
     lastUpdated: '2024-01-01',
     variance: 0.05
@@ -74,7 +84,8 @@ describe('PerformanceStateClassifier - Basic Tests', () => {
     it('should handle insufficient baseline data', () => {
       const lowSampleBaseline = {
         ...mockBaseline,
-        sampleSize: 5 // Low sample size
+        sampleSize: 5 as number, // Low sample size
+        confidenceInterval: [0.9, 1.1] as [number, number]
       };
       
       const analysis = createMockAnalysis(1.0);
@@ -93,8 +104,8 @@ describe('PerformanceStateClassifier - Basic Tests', () => {
           map: 'de_dust2',
           gameMode: 'competitive',
           durationSeconds: 3600,
-          playerStats: { rating: 1.0, kills: 20, deaths: 15, assists: 5, adr: 75, kast: 70, headshots: 8, headshotPercentage: 40, mvps: 2 },
-          rawPlayerStats: { reaction_time: 0.55, preaim: 5.0, spray_accuracy: 80 },
+          playerStats: { steamId: '123', rating: 1.0, kills: 20, deaths: 15, assists: 5, adr: 75, kast: 70, headshots: 8, headshotPercentage: 40, mvps: 2 },
+          rawPlayerStats: makeRawPlayerStats(),
           teamStats: { roundsWon: 16, roundsLost: 10, score: 16, side: 'ct' as const }
         }
       ];
@@ -135,8 +146,8 @@ describe('PerformanceStateClassifier - Basic Tests', () => {
           map: 'de_dust2',
           gameMode: 'competitive',
           durationSeconds: 3600,
-          playerStats: { rating: 1.0, kills: 20, deaths: 15, assists: 5, adr: 75, kast: 70, headshots: 8, headshotPercentage: 40, mvps: 2 },
-          rawPlayerStats: null, // No extended metrics
+          playerStats: { steamId: '123', rating: 1.0, kills: 20, deaths: 15, assists: 5, adr: 75, kast: 70, headshots: 8, headshotPercentage: 40, mvps: 2 },
+          rawPlayerStats: undefined, // No extended metrics
           teamStats: { roundsWon: 16, roundsLost: 10, score: 16, side: 'ct' as const }
         }
       ];

@@ -22,7 +22,7 @@
     "test:mcp-compliance": "npm run build && node scripts/test-mcp-compliance.js",
     "test:ollama-health": "node scripts/test-ollama-health.js",
     "deploy:workers": "npm run build && npx wrangler deploy",
-    "deploy:vercel": "npm run build && vercel --prod", 
+    "deploy:vercel": "npm run build && vercel --prod",
     "verify:deployment": "node scripts/verify-deployment-ready.js",
     "prepare": "npm run build"
   },
@@ -33,7 +33,7 @@
     "coaching",
     "mcp",
     "serverless",
-    "cloudflare-workers", 
+    "cloudflare-workers",
     "leetify",
     "gaming",
     "typescript"
@@ -58,6 +58,7 @@
     "eslint-plugin-prettier": "^5.0.1",
     "jest": "^29.7.0",
     "prettier": "^3.1.0",
+    "supertest": "^7.1.4",
     "ts-jest": "^29.1.1",
     "tsx": "^4.2.0",
     "typescript": "^5.2.2"

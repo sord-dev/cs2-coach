@@ -3,15 +3,10 @@
  * Tests tilt detection with research-validated thresholds and patterns
  */
 
-import { TiltDetector } from '../../../../src/services/detection/tilt-detector.js';
+import { tiltDetector } from '../../../../src/services/analysis';
+import { makeRawPlayerStats } from '../../../test-data';
 
 describe('TiltDetector', () => {
-  let detector: TiltDetector;
-  
-  beforeEach(() => {
-    detector = new TiltDetector();
-  });
-
   describe('detectTiltState', () => {
     const mockBaseline = {
       value: 1.0,
@@ -25,22 +20,23 @@ describe('TiltDetector', () => {
       const normalMatches = [
         {
           playerStats: { rating: 1.0 },
-          rawPlayerStats: { reaction_time: 0.5, preaim: 5.0 },
+            rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.5, preaim: 5.0 }),
           date: '2024-01-01'
         },
         {
           playerStats: { rating: 1.05 },
-          rawPlayerStats: { reaction_time: 0.52, preaim: 4.8 },
+            rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.52, preaim: 4.8 }),
           date: '2024-01-02'
         },
         {
           playerStats: { rating: 0.98 },
-          rawPlayerStats: { reaction_time: 0.48, preaim: 5.2 },
+            rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.48, preaim: 5.2 }),
           date: '2024-01-03'
         }
       ];
 
-      const tiltAnalysis = detector.detectTiltState(normalMatches, mockBaseline);
+      // @ts-expect-error
+      const tiltAnalysis = tiltDetector.detectTiltState(normalMatches, mockBaseline);
 
       expect(tiltAnalysis.active).toBe(false);
       expect(tiltAnalysis.severity).toBe('low');
@@ -53,22 +49,23 @@ describe('TiltDetector', () => {
       const slowReactionMatches = [
         {
           playerStats: { rating: 0.8 },
-          rawPlayerStats: { reaction_time: 0.7, preaim: 5.0 }, // Above 650ms threshold
+            rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.7, preaim: 5.0 }), // Above 650ms threshold
           date: '2024-01-01'
         },
         {
           playerStats: { rating: 0.75 },
-          rawPlayerStats: { reaction_time: 0.72, preaim: 5.2 },
+            rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.72, preaim: 5.2 }),
           date: '2024-01-02'
         },
         {
           playerStats: { rating: 0.7 },
-          rawPlayerStats: { reaction_time: 0.75, preaim: 5.5 },
+            rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.75, preaim: 5.5 }),
           date: '2024-01-03'
         }
       ];
 
-      const tiltAnalysis = detector.detectTiltState(slowReactionMatches, mockBaseline);
+  // @ts-expect-error
+  const tiltAnalysis = tiltDetector.detectTiltState(slowReactionMatches, mockBaseline);
 
       expect(tiltAnalysis.active).toBe(true);
       expect(tiltAnalysis.severity).toBe('moderate');
@@ -82,27 +79,28 @@ describe('TiltDetector', () => {
       const preaimDegradationMatches = [
         {
           playerStats: { rating: 0.8 },
-          rawPlayerStats: { reaction_time: 0.5, preaim: 6.0 }, // Recent worse
+              rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.5, preaim: 6.0 }), // Recent worse
           date: '2024-01-05'
         },
         {
           playerStats: { rating: 0.75 },
-          rawPlayerStats: { reaction_time: 0.52, preaim: 6.2 }, // Recent worse
+              rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.52, preaim: 6.2 }), // Recent worse
           date: '2024-01-04'
         },
         {
           playerStats: { rating: 1.0 },
-          rawPlayerStats: { reaction_time: 0.48, preaim: 4.0 }, // Older better
+              rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.48, preaim: 4.0 }), // Older better
           date: '2024-01-03'
         },
         {
           playerStats: { rating: 1.05 },
-          rawPlayerStats: { reaction_time: 0.47, preaim: 3.8 }, // Older better
+              rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.47, preaim: 3.8 }), // Older better
           date: '2024-01-02'
         }
       ];
 
-      const tiltAnalysis = detector.detectTiltState(preaimDegradationMatches, mockBaseline);
+  // @ts-expect-error
+  const tiltAnalysis = tiltDetector.detectTiltState(preaimDegradationMatches, mockBaseline);
 
       // May or may not trigger depending on exact calculation - test structure instead
       expect(tiltAnalysis).toBeDefined();
@@ -114,27 +112,28 @@ describe('TiltDetector', () => {
       const cascadeMatches = [
         {
           playerStats: { rating: 0.6 }, // Significantly below baseline
-          rawPlayerStats: { reaction_time: 0.5, preaim: 5.0 },
+            rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.5, preaim: 5.0 }),
           date: '2024-01-01'
         },
         {
           playerStats: { rating: 0.55 }, // Getting worse
-          rawPlayerStats: { reaction_time: 0.52, preaim: 5.2 },
+            rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.52, preaim: 5.2 }),
           date: '2024-01-02'
         },
         {
           playerStats: { rating: 0.5 }, // Even worse
-          rawPlayerStats: { reaction_time: 0.54, preaim: 5.4 },
+            rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.54, preaim: 5.4 }),
           date: '2024-01-03'
         },
         {
           playerStats: { rating: 0.45 }, // Continuing decline
-          rawPlayerStats: { reaction_time: 0.56, preaim: 5.6 },
+            rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.56, preaim: 5.6 }),
           date: '2024-01-04'
         }
       ];
 
-      const tiltAnalysis = detector.detectTiltState(cascadeMatches, mockBaseline);
+  // @ts-expect-error
+  const tiltAnalysis = tiltDetector.detectTiltState(cascadeMatches, mockBaseline);
 
       expect(tiltAnalysis.active).toBe(true);
       expect(tiltAnalysis.severity).toMatch(/moderate|high/); // Either is acceptable for this test
@@ -146,7 +145,7 @@ describe('TiltDetector', () => {
       const incompleteMatches = [
         {
           playerStats: { rating: 1.0 },
-          rawPlayerStats: { reaction_time: null, preaim: 5.0 },
+            rawPlayerStats: makeRawPlayerStats({ reaction_time: null, preaim: 5.0 }),
           date: '2024-01-01'
         },
         {
@@ -156,7 +155,8 @@ describe('TiltDetector', () => {
         }
       ];
 
-      const tiltAnalysis = detector.detectTiltState(incompleteMatches, mockBaseline);
+  // @ts-expect-error
+  const tiltAnalysis = tiltDetector.detectTiltState(incompleteMatches, mockBaseline);
 
       expect(tiltAnalysis).toBeDefined();
       expect(tiltAnalysis.active).toBe(false); // Should default to no tilt with insufficient data
@@ -176,12 +176,13 @@ describe('TiltDetector', () => {
       const mildTiltMatches = [
         {
           playerStats: { rating: 0.85 }, // Slightly below baseline
-          rawPlayerStats: { reaction_time: 0.6, preaim: 5.0 },
+            rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.6, preaim: 5.0 }),
           date: '2024-01-01'
         }
       ];
 
-      const tiltAnalysis = detector.detectTiltState(mildTiltMatches, mockBaseline);
+  // @ts-expect-error
+  const tiltAnalysis = tiltDetector.detectTiltState(mildTiltMatches, mockBaseline);
 
       if (tiltAnalysis.active) {
         expect(tiltAnalysis.severity).toBe('low');
@@ -192,17 +193,18 @@ describe('TiltDetector', () => {
       const moderateTiltMatches = [
         {
           playerStats: { rating: 0.7 }, // Moderately below baseline  
-          rawPlayerStats: { reaction_time: 0.68, preaim: 5.5 }, // Above 650ms threshold
+            rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.68, preaim: 5.5 }), // Above 650ms threshold
           date: '2024-01-01'
         },
         {
           playerStats: { rating: 0.68 },
-          rawPlayerStats: { reaction_time: 0.72, preaim: 5.7 }, // Above 650ms threshold
+            rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.72, preaim: 5.7 }), // Above 650ms threshold
           date: '2024-01-02'
         }
       ];
 
-      const tiltAnalysis = detector.detectTiltState(moderateTiltMatches, mockBaseline);
+  // @ts-expect-error
+  const tiltAnalysis = tiltDetector.detectTiltState(moderateTiltMatches, mockBaseline);
 
       // May or may not detect tilt depending on exact logic - just check it's valid
       expect(tiltAnalysis.active).toBeDefined();
@@ -213,22 +215,23 @@ describe('TiltDetector', () => {
       const severeTiltMatches = [
         {
           playerStats: { rating: 0.5 }, // Severely below baseline
-          rawPlayerStats: { reaction_time: 0.8, preaim: 7.0 },
+            rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.8, preaim: 7.0 }),
           date: '2024-01-01'
         },
         {
           playerStats: { rating: 0.45 },
-          rawPlayerStats: { reaction_time: 0.82, preaim: 7.2 },
+            rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.82, preaim: 7.2 }),
           date: '2024-01-02'
         },
         {
           playerStats: { rating: 0.4 },
-          rawPlayerStats: { reaction_time: 0.85, preaim: 7.5 },
+            rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.85, preaim: 7.5 }),
           date: '2024-01-03'
         }
       ];
 
-      const tiltAnalysis = detector.detectTiltState(severeTiltMatches, mockBaseline);
+  // @ts-expect-error
+  const tiltAnalysis = tiltDetector.detectTiltState(severeTiltMatches, mockBaseline);
 
       expect(tiltAnalysis.active).toBeDefined();
       expect(['low', 'moderate', 'high']).toContain(tiltAnalysis.severity);
@@ -251,12 +254,13 @@ describe('TiltDetector', () => {
       const tiltMatches = [
         {
           playerStats: { rating: 0.7 },
-          rawPlayerStats: { reaction_time: 0.7, preaim: 6.0 },
+            rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.7, preaim: 6.0 }),
           date: '2024-01-01'
         }
       ];
 
-      const tiltAnalysis = detector.detectTiltState(tiltMatches, mockBaseline);
+  // @ts-expect-error
+  const tiltAnalysis = tiltDetector.detectTiltState(tiltMatches, mockBaseline);
 
       if (tiltAnalysis.active) {
         expect(tiltAnalysis.recoveryPrediction).toMatch(/\d+\.\d+ matches/);
@@ -268,12 +272,13 @@ describe('TiltDetector', () => {
       const reactionTimeTilt = [
         {
           playerStats: { rating: 0.8 },
-          rawPlayerStats: { reaction_time: 0.75, preaim: 5.0 },
+            rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.75, preaim: 5.0 }),
           date: '2024-01-01'
         }
       ];
 
-      const tiltAnalysis = detector.detectTiltState(reactionTimeTilt, mockBaseline);
+  // @ts-expect-error
+  const tiltAnalysis = tiltDetector.detectTiltState(reactionTimeTilt, mockBaseline);
 
       if (tiltAnalysis.active) {
         expect(tiltAnalysis.recommendedAction).toMatch(/break|rest|pause/i);
@@ -295,12 +300,12 @@ describe('TiltDetector', () => {
       const atThresholdMatches = [
         {
           playerStats: { rating: 1.0 },
-          rawPlayerStats: { reaction_time: 0.649, preaim: 5.0 },
+            rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.649, preaim: 5.0 }),
           date: '2024-01-01'
         },
         {
           playerStats: { rating: 1.0 },
-          rawPlayerStats: { reaction_time: 0.648, preaim: 5.0 },
+            rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.648, preaim: 5.0 }),
           date: '2024-01-02'
         }
       ];
@@ -319,8 +324,10 @@ describe('TiltDetector', () => {
         }
       ];
 
-      const noTilt = detector.detectTiltState(atThresholdMatches, mockBaseline);
-      const tilt = detector.detectTiltState(aboveThresholdMatches, mockBaseline);
+  // @ts-expect-error
+  const noTilt = tiltDetector.detectTiltState(atThresholdMatches, mockBaseline);
+  // @ts-expect-error
+  const tilt = tiltDetector.detectTiltState(aboveThresholdMatches, mockBaseline);
 
       expect(noTilt.active).toBe(false);
       expect(tilt.active).toBe(true);
@@ -339,7 +346,7 @@ describe('TiltDetector', () => {
       const belowThresholdMatches = [
         {
           playerStats: { rating: 1.0 },
-          rawPlayerStats: { reaction_time: 0.5, preaim: 5.7 }, // 14% worse than 5.0 baseline
+            rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.5, preaim: 5.7 }), // 14% worse than 5.0 baseline
           date: '2024-01-01'
         }
       ];
@@ -353,8 +360,10 @@ describe('TiltDetector', () => {
         }
       ];
 
-      const noTilt = detector.detectTiltState(belowThresholdMatches, mockBaseline);
-      const tilt = detector.detectTiltState(aboveThresholdMatches, mockBaseline);
+  // @ts-expect-error
+  const noTilt = tiltDetector.detectTiltState(belowThresholdMatches, mockBaseline);
+  // @ts-expect-error
+  const tilt = tiltDetector.detectTiltState(aboveThresholdMatches, mockBaseline);
 
       // Just check that the functions work and return valid results
       expect(noTilt.active).toBeDefined();
@@ -374,22 +383,23 @@ describe('TiltDetector', () => {
       const cascadeMatches = [
         {
           playerStats: { rating: 0.8 }, // Below baseline
-          rawPlayerStats: { reaction_time: 0.5, preaim: 5.0 },
+            rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.5, preaim: 5.0 }),
           date: '2024-01-01'
         },
         {
           playerStats: { rating: 0.75 }, // Below baseline
-          rawPlayerStats: { reaction_time: 0.52, preaim: 5.1 },
+            rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.52, preaim: 5.1 }),
           date: '2024-01-02'
         },
         {
           playerStats: { rating: 0.7 }, // Below baseline
-          rawPlayerStats: { reaction_time: 0.54, preaim: 5.2 },
+            rawPlayerStats: makeRawPlayerStats({ reaction_time: 0.54, preaim: 5.2 }),
           date: '2024-01-03'
         }
       ];
 
-      const tiltAnalysis = detector.detectTiltState(cascadeMatches, mockBaseline);
+  // @ts-expect-error
+  const tiltAnalysis = tiltDetector.detectTiltState(cascadeMatches, mockBaseline);
 
       // Just verify the analysis structure is valid
       expect(tiltAnalysis.active).toBeDefined();
@@ -415,7 +425,8 @@ describe('TiltDetector', () => {
         }
       ];
 
-      const tiltAnalysis = detector.detectTiltState(matches, highBaseline);
+  // @ts-expect-error
+  const tiltAnalysis = tiltDetector.detectTiltState(matches, highBaseline);
 
       expect(tiltAnalysis).toBeDefined();
       expect(typeof tiltAnalysis.active).toBe('boolean');
@@ -438,7 +449,8 @@ describe('TiltDetector', () => {
         }
       ];
 
-      const tiltAnalysis = detector.detectTiltState(matches, zeroBaseline);
+  // @ts-expect-error
+  const tiltAnalysis = tiltDetector.detectTiltState(matches, zeroBaseline);
 
       expect(tiltAnalysis.active).toBe(false); // Should default to no tilt
       expect(tiltAnalysis.triggers).toHaveLength(0);
@@ -461,7 +473,8 @@ describe('TiltDetector', () => {
       }));
 
       const startTime = Date.now();
-      const tiltAnalysis = detector.detectTiltState(largeDataset, mockBaseline);
+  // @ts-expect-error
+  const tiltAnalysis = tiltDetector.detectTiltState(largeDataset, mockBaseline);
       const endTime = Date.now();
 
       expect(endTime - startTime).toBeLessThan(1000); // Should complete within 1 second

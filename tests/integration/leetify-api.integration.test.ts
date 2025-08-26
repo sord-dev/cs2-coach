@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 
 import { LeetifyAPIClient } from '../../src/services/leetify/index';
-import { LeetifyDataTransformer } from '../../src/services/data-transformer/index';
+import { LeetifyDataTransformer } from '../../src/services/analysis';
 import { mockPlayerProfile, mockMatchHistory } from '../test-data';
 
 jest.mock('node-fetch');

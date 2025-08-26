@@ -1,5 +1,5 @@
 
-import { LeetifyDataTransformer } from '../../../src/services/data-transformer';
+import { LeetifyDataTransformer } from '../../../src/services/analysis/LeetifyDataTransformer';
 import { getAreaLabel } from '../../../src/services/analysis/area';
 import { makeRawPlayerStats } from '../../test-data';
 

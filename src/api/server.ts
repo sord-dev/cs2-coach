@@ -4,9 +4,11 @@
  */
 
 import { LeetifyAPIClient } from '../services/leetify/index.js';
-import { NoOpAIService } from '../services/ollama/noop.js';
 import { IAICoachService } from '../services/ollama/interface.js';
-import { LeetifyDataTransformer } from '../services/data-transformer/index.js';
+import { NoOpAIService } from '../services/ollama/noop.js'
+import { LeetifyDataTransformer } from '../services/analysis/leetify-data-transformer.js';
+
+// Handlers
 import { CoachingHandler } from '../handlers/coachingHandler.js';
 import { AreaAnalysisHandler } from '../handlers/areaAnalysisHandler.js';
 import { ImprovementHandler } from '../handlers/improvementHandler.js';
@@ -99,19 +101,19 @@ export class CS2CoachHTTPService {
     switch (path) {
       case '/api/coaching-advice':
         return coachingAdviceHandler(request, this.coachingHandler);
-      
+
       case '/api/analyze-area':
         return areaAnalysisHandler(request, this.areaAnalysisHandler);
-      
+
       case '/api/track-improvement':
         return improvementTrackingHandler(request, this.improvementHandler);
-      
+
       case '/api/compare-to-rank':
         return rankComparisonHandler(request, this.rankComparisonHandler);
-      
+
       case '/api/enhanced-analysis':
         return enhancedAnalysisHandler(request, this.enhancedAnalysisHandler);
-      
+
       default:
         return createErrorResponse(
           404,
