@@ -104,7 +104,7 @@ CACHE_TTL_AI_RESPONSES_MS=3600000  # 1 hour
 Only needed if you want AI commentary (DISABLE_AI=false):
 
 ```bash
-ollama create cs2-coach -f ./modelfiles/cs2-coach-basic.modelfile
+ollama create cs2-coach -f ./modelfiles/cs2-coach-enhanced.modelfile
 ```
 
 ### 4. Health Checks
@@ -537,6 +537,10 @@ ollama serve
 ```bash
 # Create the model
 ollama create cs2-coach -f ./modelfiles/cs2-coach-basic.modelfile
+
+# OR
+
+ollama create cs2-coach -f ./modelfiles/cs2-coach-enhanced.modelfile
 
 # Verify model creation
 ollama list | grep cs2-coach

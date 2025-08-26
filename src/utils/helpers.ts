@@ -174,3 +174,35 @@ export function determineCSRank(score: number): string {
   ];
   return ranks[score] || 'Unknown';
 }
+
+/**
+ * Safe JSON stringification that handles Date objects, circular references, and undefined values.
+ * @param obj Object to serialize
+ * @param space Optional spacing for pretty printing
+ * @returns JSON string
+ */
+export function safeJsonStringify(obj: any, space?: number): string {
+  const seen = new WeakSet();
+  
+  return JSON.stringify(obj, (key, value) => {
+    // Handle Date objects by converting to ISO strings
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+    
+    // Handle circular references
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return '[Circular Reference]';
+      }
+      seen.add(value);
+    }
+    
+    // Handle undefined values
+    if (value === undefined) {
+      return null;
+    }
+    
+    return value;
+  }, space);
+}

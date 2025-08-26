@@ -3,7 +3,7 @@
  * Standalone HTTP server entry point for testing and Node.js deployment
  */
 
-import { CS2CoachHTTPService } from './http-server.js';
+import { CS2CoachHTTPService } from './api/server.js';
 
 const PORT = process.env.PORT || 3000;
 

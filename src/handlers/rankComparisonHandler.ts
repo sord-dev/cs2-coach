@@ -2,6 +2,7 @@ import { RankComparisonSchema } from '../types/index.js';
 import { LeetifyAPIClient } from '../services/leetify/index.js';
 import { IAICoachService } from '../services/ollama/interface.js';
 import { LeetifyDataTransformer } from '../services/data-transformer/index.js';
+import { safeJsonStringify } from '../utils/helpers.js';
 
 export class RankComparisonHandler {
   constructor(
@@ -55,14 +56,14 @@ export class RankComparisonHandler {
       content: [
         {
           type: 'text',
-          text: JSON.stringify({
+          text: safeJsonStringify({
             type: 'rank_comparison',
             playerId: validatedArgs.playerId,
             targetRank: validatedArgs.targetRank,
             timeRange: validatedArgs.timeRange,
             response: coachingResponse,
             generatedAt: new Date().toISOString(),
-          }, null, 2),
+          }, 2),
         },
       ],
     };

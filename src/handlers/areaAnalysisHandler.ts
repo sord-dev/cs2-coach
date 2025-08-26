@@ -2,6 +2,7 @@ import { SpecificAreaAnalysisSchema } from '../types/index.js';
 import { LeetifyAPIClient } from '../services/leetify/index.js';
 import { IAICoachService } from '../services/ollama/interface.js';
 import { LeetifyDataTransformer } from '../services/data-transformer/index.js';
+import { safeJsonStringify } from '../utils/helpers.js';
 
 export class AreaAnalysisHandler {
   constructor(
@@ -31,7 +32,7 @@ export class AreaAnalysisHandler {
         recommendations: [],
         practiceRoutine: { warmup: [], aimTraining: [], mapPractice: [], tacticalReview: [], estimatedTime: 0 },
         confidence: 1.0,
-        generatedAt: new Date(),
+        generatedAt: new Date().toISOString(),
       };
     } else {
       response = await this.ollamaService.analyzeSpecificArea({
@@ -44,7 +45,7 @@ export class AreaAnalysisHandler {
       content: [
         {
           type: 'text',
-          text: JSON.stringify({
+          text: safeJsonStringify({
             type: 'specific_area_analysis',
             playerId: validatedArgs.playerId,
             area: validatedArgs.area,
@@ -52,7 +53,7 @@ export class AreaAnalysisHandler {
             skipAI: validatedArgs.skipAI,
             response,
             generatedAt: new Date().toISOString(),
-          }, null, 2),
+          }, 2),
         },
       ],
     };

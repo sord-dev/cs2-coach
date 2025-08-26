@@ -2,6 +2,7 @@ import { CoachingRequestSchema } from '../types/index.js';
 import { LeetifyAPIClient } from '../services/leetify/index.js';
 import { IAICoachService } from '../services/ollama/interface.js';
 import { LeetifyDataTransformer } from '../services/data-transformer/index.js';
+import { safeJsonStringify } from '../utils/helpers.js';
 
 export class CoachingHandler {
   constructor(
@@ -14,6 +15,9 @@ export class CoachingHandler {
    * Handles general coaching advice requests with enhanced analysis capabilities.
    */
   async handleCoachingAdvice(args: unknown): Promise<any> {
+    try {
+      console.error('CoachingHandler: Starting coaching advice request');
+      console.error('CoachingHandler: Args received:', JSON.stringify(args));
     const validatedArgs = CoachingRequestSchema.parse(args);
     const playerProfile = await this.leetifyClient.getPlayerProfile(validatedArgs.playerId);
     const matchHistory = await this.leetifyClient.getMatchHistory(
@@ -81,7 +85,7 @@ export class CoachingHandler {
       content: [
         {
           type: 'text',
-          text: JSON.stringify({
+          text: safeJsonStringify({
             type: 'coaching_advice',
             playerId: validatedArgs.playerId,
             analysisType: validatedArgs.analysisType,
@@ -90,10 +94,30 @@ export class CoachingHandler {
             enhancedAnalysisUsed: useEnhancedAnalysis,
             response,
             generatedAt: new Date().toISOString(),
-          }, null, 2),
+          }, 2),
         },
       ],
     };
+    
+    } catch (error) {
+      console.error('CoachingHandler: Error occurred:', error);
+      console.error('CoachingHandler: Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: safeJsonStringify({
+              type: 'error',
+              errorType: 'coaching_handler_error',
+              message: error instanceof Error ? error.message : 'Unknown error occurred',
+              timestamp: new Date().toISOString(),
+            }, 2),
+          },
+        ],
+        isError: true,
+      };
+    }
   }
 
   /**

@@ -2,6 +2,7 @@ import { ImprovementTrackingSchema } from '../types/index.js';
 import { LeetifyAPIClient } from '../services/leetify/index.js';
 import { IAICoachService } from '../services/ollama/interface.js';
 import { LeetifyDataTransformer } from '../services/data-transformer/index.js';
+import { safeJsonStringify } from '../utils/helpers.js';
 
 export class ImprovementHandler {
   constructor(
@@ -32,14 +33,14 @@ export class ImprovementHandler {
       content: [
         {
           type: 'text',
-          text: JSON.stringify({
+          text: safeJsonStringify({
             type: 'improvement_tracking',
             playerId: validatedArgs.playerId,
             timeRange: `${validatedArgs.fromDate} to ${validatedArgs.toDate}`,
             metrics: validatedArgs.metrics,
             response: coachingResponse,
             generatedAt: new Date().toISOString(),
-          }, null, 2),
+          }, 2),
         },
       ],
     };

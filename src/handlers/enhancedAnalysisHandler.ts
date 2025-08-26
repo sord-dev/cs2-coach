@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { LeetifyAPIClient } from '../services/leetify/index.js';
 import { IAICoachService } from '../services/ollama/interface.js';
 import { LeetifyDataTransformer } from '../services/data-transformer/index.js';
+import { safeJsonStringify } from '../utils/helpers.js';
 
 const EnhancedAnalysisRequestSchema = z.object({
   playerId: z.string(),
@@ -40,13 +41,13 @@ export class EnhancedAnalysisHandler {
         content: [
           {
             type: 'text',
-            text: JSON.stringify({
+            text: safeJsonStringify({
               type: 'enhanced_analysis_error',
               error: 'Insufficient match data',
               message: `Enhanced analysis requires at least 5 matches, but only ${matchHistory.length} found`,
               playerId: validatedArgs.playerId,
               generatedAt: new Date().toISOString()
-            }, null, 2)
+            }, 2)
           }
         ]
       };
@@ -61,7 +62,12 @@ export class EnhancedAnalysisHandler {
 
       // Filter components based on request
       const filteredAnalysis = this.filterAnalysisComponents(enhancedAnalysis, validatedArgs.components);
-      
+
+      // Defensive deep clone to avoid circular references
+      const clone = (obj: any) => JSON.parse(JSON.stringify(obj));
+      const filteredAnalysisClone = clone(filteredAnalysis);
+      const enhancedAnalysisClone = clone(enhancedAnalysis);
+
       // Get basic analysis for context if needed
       const basicAnalysis = validatedArgs.includeBaseline ? 
         this.dataTransformer.processMatches(matchHistory, validatedArgs.playerId) : null;
@@ -70,13 +76,13 @@ export class EnhancedAnalysisHandler {
       if (validatedArgs.skipAI) {
         // Return raw analysis without AI interpretation
         response = {
-          enhancedAnalysis: filteredAnalysis,
+          enhancedAnalysis: filteredAnalysisClone,
           basicAnalysis,
           playerProfile,
           metadata: {
             matchCount: matchHistory.length,
             analysisComponents: validatedArgs.components,
-            dataQuality: this.assessDataQuality(enhancedAnalysis),
+            dataQuality: this.assessDataQuality(enhancedAnalysisClone),
             generatedAt: new Date().toISOString(),
             analysisType: 'enhanced_statistical'
           }
@@ -84,13 +90,12 @@ export class EnhancedAnalysisHandler {
       } else {
         // Generate AI insights about the enhanced analysis
         const aiRequest = {
-          enhancedAnalysis: filteredAnalysis,
+          enhancedAnalysis: filteredAnalysisClone,
           basicAnalysis,
           playerProfile,
           playerId: validatedArgs.playerId,
           components: validatedArgs.components
         };
-        
         response = await this.ollamaService.analyzeEnhancedData(aiRequest);
       }
 
@@ -98,14 +103,14 @@ export class EnhancedAnalysisHandler {
         content: [
           {
             type: 'text',
-            text: JSON.stringify({
+            text: safeJsonStringify({
               type: 'enhanced_analysis',
               playerId: validatedArgs.playerId,
               components: validatedArgs.components,
               matchCount: validatedArgs.matchCount,
               response,
               generatedAt: new Date().toISOString()
-            }, null, 2)
+            }, 2)
           }
         ]
       };
@@ -115,13 +120,13 @@ export class EnhancedAnalysisHandler {
         content: [
           {
             type: 'text',
-            text: JSON.stringify({
+            text: safeJsonStringify({
               type: 'enhanced_analysis_error',
               error: 'Analysis failed',
               message: error instanceof Error ? error.message : 'Unknown error occurred',
               playerId: validatedArgs.playerId,
               generatedAt: new Date().toISOString()
-            }, null, 2)
+            }, 2)
           }
         ]
       };
@@ -183,10 +188,9 @@ export class EnhancedAnalysisHandler {
    * Assesses the quality of the enhanced analysis data.
    */
   private assessDataQuality(analysis: any): any {
-    const warnings = analysis.warnings || [];
+    const warnings = Array.isArray(analysis.warnings) ? analysis.warnings : [];
     const qualityScore = warnings.length === 0 ? 'high' : 
                         warnings.length <= 2 ? 'moderate' : 'low';
-    
     return {
       score: qualityScore,
       issues: warnings,

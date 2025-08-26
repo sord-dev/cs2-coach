@@ -2,6 +2,9 @@ import { EnhancedAnalysisHandler } from '../../../src/handlers/enhancedAnalysisH
 import { mockMatchHistory, mockPlayerProfile } from '../../test-data';
 
 describe('EnhancedAnalysisHandler', () => {
+    beforeEach(() => {
+        jest.resetAllMocks();
+    });
     let leetifyClient: any;
     let ollamaService: any;
     let dataTransformer: any;
@@ -9,8 +12,8 @@ describe('EnhancedAnalysisHandler', () => {
 
     beforeEach(() => {
         leetifyClient = {
-                getPlayerProfile: jest.fn().mockResolvedValue(mockPlayerProfile()),
-                getMatchHistory: jest.fn().mockResolvedValue(mockMatchHistory().matches),
+            getPlayerProfile: jest.fn().mockResolvedValue(mockPlayerProfile()),
+            getMatchHistory: jest.fn().mockResolvedValue(mockMatchHistory().matches),
         };
 
         dataTransformer = {
@@ -136,13 +139,13 @@ describe('EnhancedAnalysisHandler', () => {
 
     it('returns error when insufficient match data', async () => {
         leetifyClient.getMatchHistory.mockResolvedValue([]); // Empty match history
-        
+
         const args = {
             playerId: 'player1',
             matchCount: 5,
             skipAI: true,
         };
-        
+
         const result = await handler.handleEnhancedAnalysis(args);
         const parsed = JSON.parse(result.content[0].text);
         expect(parsed.type).toBe('enhanced_analysis_error');
@@ -156,27 +159,27 @@ describe('EnhancedAnalysisHandler', () => {
             components: ['tilt_detection', 'correlation_analysis'],
             skipAI: true,
         };
-        
+
         const result = await handler.handleEnhancedAnalysis(args);
         const parsed = JSON.parse(result.content[0].text);
-        
+
         // Should only include tilt detection and correlation analysis
         expect(parsed.response.enhancedAnalysis.performanceStateAnalysis.detectedPatterns.tiltIndicators).toBeDefined();
         expect(parsed.response.enhancedAnalysis.metricCorrelationAnalysis).toBeDefined();
-        
+
         // Should not include flow state indicators (not in components)
         expect(parsed.response.enhancedAnalysis.performanceStateAnalysis.currentState).toBeUndefined();
     });
 
     it('handles analysis generation errors gracefully', async () => {
         dataTransformer.generateEnhancedAnalysis.mockRejectedValue(new Error('Analysis failed'));
-        
+
         const args = {
             playerId: 'player1',
             matchCount: 10,
             skipAI: true,
         };
-        
+
         const result = await handler.handleEnhancedAnalysis(args);
         const parsed = JSON.parse(result.content[0].text);
         expect(parsed.type).toBe('enhanced_analysis_error');
@@ -191,17 +194,21 @@ describe('EnhancedAnalysisHandler', () => {
             includeBaseline: false,
             skipAI: true,
         };
-        
+
         const result = await handler.handleEnhancedAnalysis(args);
         const parsed = JSON.parse(result.content[0].text);
-        
+
         expect(parsed.response.basicAnalysis).toBeNull();
         expect(dataTransformer.processMatches).not.toHaveBeenCalled();
     });
 
     it('handles analysis with warnings for data quality assessment', async () => {
+
+        // Avoid circular reference: use plain object, no self-references
+        // Always use a new object and a plain array for warnings
+        const warningsArr = ['Insufficient data for baseline', 'Low match count'];
         dataTransformer.generateEnhancedAnalysis.mockResolvedValue({
-            warnings: ['Insufficient data for baseline', 'Low match count'],
+            warnings: [...warningsArr],
             performanceStateAnalysis: {
                 currentState: {
                     classification: 'baseline_normal',
@@ -215,11 +222,40 @@ describe('EnhancedAnalysisHandler', () => {
             matchCount: 10,
             skipAI: true,
         };
-        
+
         const result = await handler.handleEnhancedAnalysis(args);
         const parsed = JSON.parse(result.content[0].text);
-        
+
         expect(parsed.response.metadata.dataQuality.score).toBe('moderate');
-        expect(parsed.response.metadata.dataQuality.issues).toEqual(['Insufficient data for baseline', 'Low match count']);
+        // Defensive: check that issues is an array and not a string
+        expect(Array.isArray(parsed.response.metadata.dataQuality.issues)).toBe(true);
+        expect(parsed.response.metadata.dataQuality.issues).toEqual(warningsArr);
+    });
+
+
+    it('handles data quality: high (no warnings)', async () => {
+        dataTransformer.generateEnhancedAnalysis.mockResolvedValue({
+            warnings: [],
+            performanceStateAnalysis: { currentState: { classification: 'baseline_normal', confidence: 1 } },
+        });
+        const args = { playerId: 'player1', matchCount: 10, skipAI: true };
+        const result = await handler.handleEnhancedAnalysis(args);
+        const parsed = JSON.parse(result.content[0].text);
+        expect(parsed.response.metadata.dataQuality.score).toBe('high');
+        expect(parsed.response.metadata.dataQuality.issues).toEqual([]);
+        expect(parsed.response.metadata.dataQuality.reliability).toMatch(/reliable/i);
+    });
+
+    it('handles data quality: low (3+ warnings)', async () => {
+        dataTransformer.generateEnhancedAnalysis.mockResolvedValue({
+            warnings: ['w1', 'w2', 'w3'],
+            performanceStateAnalysis: { currentState: { classification: 'baseline_normal', confidence: 0.3 } },
+        });
+        const args = { playerId: 'player1', matchCount: 10, skipAI: true };
+        const result = await handler.handleEnhancedAnalysis(args);
+        const parsed = JSON.parse(result.content[0].text);
+        expect(parsed.response.metadata.dataQuality.score).toBe('low');
+        expect(parsed.response.metadata.dataQuality.issues).toEqual(['w1', 'w2', 'w3']);
+        expect(parsed.response.metadata.dataQuality.reliability).toMatch(/caution/i);
     });
 });

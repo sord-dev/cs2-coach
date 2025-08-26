@@ -1,7 +1,12 @@
+
 import { CoachingHandler } from '../../../src/handlers/coachingHandler';
 import { LeetifyAPIClient } from '../../../src/services/leetify/index';
 import { OllamaCoachService } from '../../../src/services/ollama/index';
 import { LeetifyDataTransformer } from '../../../src/services/data-transformer/index';
+import {
+  mockPlayerProfile,
+  createAnalysis
+} from '../../test-data';
 
 jest.mock('../../../src/services/leetify/index');
 jest.mock('../../../src/services/ollama/index');
@@ -21,17 +26,9 @@ describe('CoachingHandler', () => {
   });
 
   it('should return analysis and skip AI if skipAI is true', async () => {
-    leetifyClient.getPlayerProfile.mockResolvedValue({ steam64_id: '123', name: 'test', rating: 1, rank: 'mg', gamesCount: 10, averageRating: 1, kdRatio: 1, winRate: 50 });
-    leetifyClient.getMatchHistory.mockResolvedValue([]);
-    dataTransformer.processMatches.mockReturnValue({
-      playerId: '123',
-      timeRange: '',
-      averageStats: { rating: 0, kdRatio: 0, adr: 0, kast: 0, headshotPercentage: 0, gamesPlayed: 0 },
-      recentPerformance: [],
-      strengths: [],
-      weaknesses: [],
-      trends: []
-    });
+  leetifyClient.getPlayerProfile.mockResolvedValue(mockPlayerProfile({ steam64_id: '123', id: '123', total_matches: 10 }));
+  leetifyClient.getMatchHistory.mockResolvedValue([]);
+  dataTransformer.processMatches.mockReturnValue(createAnalysis({ playerId: '123', averageStats: { rating: 0, kdRatio: 0, adr: 0, kast: 0, headshotPercentage: 0, gamesPlayed: 0 } }));
 
     const result = await handler.handleCoachingAdvice({ playerId: '123', skipAI: true, matchCount: 1, analysisType: 'general', timeRange: 'recent' });
     expect(result.content[0].text).toContain('coaching_advice');
@@ -39,17 +36,9 @@ describe('CoachingHandler', () => {
   });
 
   it('should call ollamaService.analyzeGameplay if skipAI is false', async () => {
-    leetifyClient.getPlayerProfile.mockResolvedValue({ steamId: '123', nickname: 'test', leetifyRating: 1, rank: 'mg', gamesCount: 10, averageRating: 1, kdRatio: 1, winRate: 50 });
-    leetifyClient.getMatchHistory.mockResolvedValue([]);
-    dataTransformer.processMatches.mockReturnValue({
-      playerId: '123',
-      timeRange: '',
-      averageStats: { rating: 0, kdRatio: 0, adr: 0, kast: 0, headshotPercentage: 0, gamesPlayed: 0 },
-      recentPerformance: [],
-      strengths: [],
-      weaknesses: [],
-      trends: []
-    });
+  leetifyClient.getPlayerProfile.mockResolvedValue(mockPlayerProfile({ steam64_id: '123', id: '123', total_matches: 10 }));
+  leetifyClient.getMatchHistory.mockResolvedValue([]);
+  dataTransformer.processMatches.mockReturnValue(createAnalysis({ playerId: '123', averageStats: { rating: 0, kdRatio: 0, adr: 0, kast: 0, headshotPercentage: 0, gamesPlayed: 0 } }));
     ollamaService.analyzeGameplay.mockResolvedValue({
       analysis: {
         playerId: '123',
@@ -78,17 +67,9 @@ describe('CoachingHandler', () => {
   });
 
   it('should handle insufficient match data', async () => {
-    leetifyClient.getPlayerProfile.mockResolvedValue({ steam64_id: '123', name: 'test', rating: 1, rank: 'mg', gamesCount: 0, averageRating: 1, kdRatio: 1, winRate: 50 });
-    leetifyClient.getMatchHistory.mockResolvedValue([]);
-    dataTransformer.processMatches.mockReturnValue({
-      playerId: '123',
-      timeRange: '',
-      averageStats: { rating: 0, kdRatio: 0, adr: 0, kast: 0, headshotPercentage: 0, gamesPlayed: 0 },
-      recentPerformance: [],
-      strengths: [],
-      weaknesses: ['positioning'], // Add weaknesses to avoid undefined
-      trends: []
-    });
+  leetifyClient.getPlayerProfile.mockResolvedValue(mockPlayerProfile({ steam64_id: '123', id: '123', total_matches: 0 }));
+  leetifyClient.getMatchHistory.mockResolvedValue([]);
+  dataTransformer.processMatches.mockReturnValue(createAnalysis({ playerId: '123', averageStats: { rating: 0, kdRatio: 0, adr: 0, kast: 0, headshotPercentage: 0, gamesPlayed: 0 }, weaknesses: ['positioning'] }));
 
     const result = await handler.handleCoachingAdvice({ playerId: '123', skipAI: true, matchCount: 1, analysisType: 'general', timeRange: 'recent' });
     expect(result.content[0].text).toContain('coaching_advice');
@@ -98,18 +79,10 @@ describe('CoachingHandler', () => {
   });
 
   it('should handle enhanced analysis with sufficient data', async () => {
-    leetifyClient.getPlayerProfile.mockResolvedValue({ steam64_id: '123', name: 'test', rating: 1, rank: 'mg', gamesCount: 25, averageRating: 1, kdRatio: 1, winRate: 50 });
-    leetifyClient.getMatchHistory.mockResolvedValue(Array.from({length: 25}, (_, i) => ({ id: i.toString() })) as any);
-    dataTransformer.setAdaptiveThresholds = jest.fn();
-    dataTransformer.processMatches.mockReturnValue({
-      playerId: '123',
-      timeRange: '',
-      averageStats: { rating: 0, kdRatio: 0, adr: 0, kast: 0, headshotPercentage: 0, gamesPlayed: 25 },
-      recentPerformance: [],
-      strengths: [],
-      weaknesses: [],
-      trends: []
-    });
+  leetifyClient.getPlayerProfile.mockResolvedValue(mockPlayerProfile({ steam64_id: '123', id: '123', total_matches: 25 }));
+  leetifyClient.getMatchHistory.mockResolvedValue(Array.from({length: 25}, (_, i) => ({ id: i.toString() })) as any);
+  dataTransformer.setAdaptiveThresholds = jest.fn();
+  dataTransformer.processMatches.mockReturnValue(createAnalysis({ playerId: '123', averageStats: { rating: 0, kdRatio: 0, adr: 0, kast: 0, headshotPercentage: 0, gamesPlayed: 25 } }));
     dataTransformer.generateEnhancedAnalysis = jest.fn().mockResolvedValue({
       performanceStateAnalysis: { 
         currentState: { classification: 'flow_state', confidence: 0.9 },
@@ -128,17 +101,9 @@ describe('CoachingHandler', () => {
   });
 
   it('should handle different analysis types', async () => {
-    leetifyClient.getPlayerProfile.mockResolvedValue({ steam64_id: '123', name: 'test', rating: 1, rank: 'mg', gamesCount: 10, averageRating: 1, kdRatio: 1, winRate: 50 });
-    leetifyClient.getMatchHistory.mockResolvedValue([{ id: '1' }] as any);
-    dataTransformer.processMatches.mockReturnValue({
-      playerId: '123',
-      timeRange: '',
-      averageStats: { rating: 0, kdRatio: 0, adr: 0, kast: 0, headshotPercentage: 0, gamesPlayed: 10 },
-      recentPerformance: [],
-      strengths: [],
-      weaknesses: [],
-      trends: []
-    });
+  leetifyClient.getPlayerProfile.mockResolvedValue(mockPlayerProfile({ steam64_id: '123', id: '123', total_matches: 10 }));
+  leetifyClient.getMatchHistory.mockResolvedValue([{ id: '1' }] as any);
+  dataTransformer.processMatches.mockReturnValue(createAnalysis({ playerId: '123', averageStats: { rating: 0, kdRatio: 0, adr: 0, kast: 0, headshotPercentage: 0, gamesPlayed: 10 } }));
 
     // Test aim analysis
     const aimResult = await handler.handleCoachingAdvice({ playerId: '123', skipAI: true, matchCount: 1, analysisType: 'aim', timeRange: 'recent' });
@@ -150,12 +115,16 @@ describe('CoachingHandler', () => {
   });
 
   it('should handle API errors gracefully', async () => {
-    leetifyClient.getPlayerProfile.mockRejectedValue(new Error('API Error'));
+  leetifyClient.getPlayerProfile.mockRejectedValue(new Error('API Error'));
 
-    await expect(handler.handleCoachingAdvice({ playerId: '123', skipAI: true, matchCount: 1, analysisType: 'general', timeRange: 'recent' })).rejects.toThrow('API Error');
+  const result = await handler.handleCoachingAdvice({ playerId: '123', skipAI: true, matchCount: 1, analysisType: 'general', timeRange: 'recent' });
+  expect(result.isError).toBe(true);
+  expect(result.content[0].text).toContain('API Error');
   });
 
   it('should validate invalid input', async () => {
-    await expect(handler.handleCoachingAdvice({ playerId: 123 } as any)).rejects.toThrow();
+  const result = await handler.handleCoachingAdvice({ playerId: 123 } as any);
+  expect(result.isError).toBe(true);
+  expect(result.content[0].text).toContain('invalid_type');
   });
 });

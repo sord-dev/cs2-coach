@@ -21,6 +21,7 @@ import { EnhancedAnalysisHandler } from './handlers/enhancedAnalysisHandler.js';
 
 import { ValidationError, LeetifyAPIError, OllamaError } from './types/index.js';
 import { COMMANDS } from './commands/index.js';
+import { safeJsonStringify } from './utils/helpers.js';
 
 // Load environment variables (Node.js environments only)
 if (typeof process !== 'undefined' && process.env) {
@@ -45,7 +46,7 @@ class CS2CoachServer {
   private enhancedAnalysisHandler: EnhancedAnalysisHandler;
 
   constructor() {
-    console.log('CS2CoachServer constructor called');
+    console.error('CS2CoachServer constructor called');
     this.server = new Server(
       {
         name: (typeof process !== 'undefined' && process.env?.MCP_SERVER_NAME) || 'cs2-coach',
@@ -57,17 +58,17 @@ class CS2CoachServer {
         },
       }
     );
-    console.log('Server instance created');
+    console.error('Server instance created');
 
     try {
-      console.log('Initializing LeetifyAPIClient...');
+      console.error('Initializing LeetifyAPIClient...');
       this.leetifyClient = new LeetifyAPIClient();
       
       // Initialize AI service (Ollama or NoOp fallback)
-      console.log('Initializing AI service...');
+      console.error('Initializing AI service...');
       this.ollamaService = this.initializeAIService();
       
-      console.log('Initializing LeetifyDataTransformer...');
+      console.error('Initializing LeetifyDataTransformer...');
       this.dataTransformer = new LeetifyDataTransformer();
       // Initialize handlers
       this.coachingHandler = new CoachingHandler(this.leetifyClient, this.ollamaService, this.dataTransformer);
@@ -75,11 +76,11 @@ class CS2CoachServer {
       this.improvementHandler = new ImprovementHandler(this.leetifyClient, this.ollamaService, this.dataTransformer);
       this.rankComparisonHandler = new RankComparisonHandler(this.leetifyClient, this.ollamaService, this.dataTransformer);
       this.enhancedAnalysisHandler = new EnhancedAnalysisHandler(this.leetifyClient, this.ollamaService, this.dataTransformer);
-      console.log('Setting up handlers...');
+      console.error('Setting up handlers...');
       this.setupHandlers();
-      console.log('CS2CoachServer initialization complete');
+      console.error('CS2CoachServer initialization complete');
     } catch (error) {
-      console.log('Error initializing CS2CoachServer services:', error);
+      console.error('Error initializing CS2CoachServer services:', error);
       throw error;
     }
   }
@@ -92,14 +93,14 @@ class CS2CoachServer {
     
     if (useAI) {
       try {
-        console.log('Attempting to initialize Ollama service...');
+        console.error('Attempting to initialize Ollama service...');
         return new OllamaCoachService();
       } catch (error) {
-        console.log('Failed to initialize Ollama service, falling back to NoOp:', error);
+        console.error('Failed to initialize Ollama service, falling back to NoOp:', error);
         return new NoOpAIService();
       }
     } else {
-      console.log('AI disabled - using statistical analysis only');
+      console.error('AI disabled - using statistical analysis only');
       return new NoOpAIService();
     }
   }
@@ -127,23 +128,33 @@ class CS2CoachServer {
 
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       try {
+        console.error('CallTool request received:', JSON.stringify(request.params));
         const { name, arguments: args } = request.params;
+
+        console.error(`Processing tool: ${name}`);
 
         switch (name) {
           case 'get_coaching_advice':
+            console.error('Calling handleCoachingAdvice');
             return await this.handleCoachingAdvice(args);
           case 'analyze_specific_area':
+            console.error('Calling handleSpecificAreaAnalysis');
             return await this.handleSpecificAreaAnalysis(args);
           case 'track_improvement':
+            console.error('Calling handleImprovementTracking');
             return await this.handleImprovementTracking(args);
           case 'compare_to_rank':
+            console.error('Calling handleRankComparison');
             return await this.handleRankComparison(args);
           case 'get_enhanced_analysis':
+            console.error('Calling handleEnhancedAnalysis');
             return await this.handleEnhancedAnalysis(args);
           default:
+            console.error(`Unknown tool: ${name}`);
             throw new Error(`Unknown tool: ${name}`);
         }
       } catch (error) {
+        console.error('CallTool request failed:', error);
         return this.handleError(error);
       }
     });
@@ -216,12 +227,12 @@ class CS2CoachServer {
       content: [
         {
           type: 'text',
-          text: JSON.stringify({
+          text: safeJsonStringify({
             type: 'error',
             errorType,
             message: errorMessage,
             timestamp: new Date().toISOString(),
-          }, null, 2),
+          }, 2),
         },
       ],
       isError: true,
@@ -233,12 +244,27 @@ class CS2CoachServer {
    */
   async run(): Promise<void> {
     try {
-      this.setupHandlers();
+      console.error('Starting MCP server...');
       const transport = new StdioServerTransport();
+      
+      // Add error handlers for the transport
+      transport.onclose = () => {
+        console.error('Transport closed');
+      };
+      
+      transport.onerror = (error) => {
+        console.error('Transport error:', error);
+      };
+      
+      console.error('Connecting to transport...');
       await this.server.connect(transport);
-      console.log('CS2 AI Coach MCP server running on stdio');
+      console.error('CS2 AI Coach MCP server connected and running on stdio');
+      
+      // Keep the process alive
+      process.stdin.resume();
+      
     } catch (error) {
-      console.log('Error starting MCP server:', error);
+      console.error('Error starting MCP server:', error);
       throw error;
     }
   }
@@ -249,12 +275,17 @@ class CS2CoachServer {
  */
 async function main(): Promise<void> {
   try {
-    console.log('Main function called');
+    console.error('Main function called');
     const server = new CS2CoachServer();
-    console.log('CS2CoachServer instantiated, calling run()');
+    console.error('CS2CoachServer instantiated, calling run()');
     await server.run();
+    
+    // Keep the process running
+    console.error('MCP server is now running and waiting for connections...');
+    
   } catch (error) {
-    console.log('Failed to start CS2 Coach MCP server:', error);
+    console.error('Failed to start CS2 Coach MCP server:', error);
+    console.error('Error details:', error);
     if (typeof process !== 'undefined') {
       process.exit(1);
     }
@@ -263,13 +294,14 @@ async function main(): Promise<void> {
 
 // Start the server if this file is run directly (Node.js only)
 if (typeof process !== 'undefined') {
-  console.log('process.argv[1]:', process.argv[1]);
+  console.error('process.argv[1]:', process.argv[1]);
   const isMainModule = process.argv[1] && process.argv[1].endsWith('server.js');
-  console.log('Script started, isMainModule:', isMainModule);
+  console.error('Script started, isMainModule:', isMainModule);
   if (isMainModule) {
-    console.log('Starting main function...');
+    console.error('Starting main function...');
     main().catch((error) => {
-      console.log('Unhandled error:', error);
+      console.error('Unhandled error:', error);
+      console.error('Stack trace:', error.stack);
       process.exit(1);
     });
   }

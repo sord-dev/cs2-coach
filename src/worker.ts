@@ -3,7 +3,7 @@
  * Optimized for edge deployment with statistical analysis
  */
 
-import { CS2CoachHTTPService } from './http-server.js';
+import { CS2CoachHTTPService } from './api/server.js';
 
 export default {
   async fetch(request: Request, env: any, ctx: any): Promise<Response> {
