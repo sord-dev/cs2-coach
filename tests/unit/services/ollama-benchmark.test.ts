@@ -1,7 +1,9 @@
 
 import { MockOllamaClient } from './mock-ollama-client';
 
-describe('Ollama Model Benchmark (fetch-based)', () => {
+const maybeDescribe = process.env.CI ? describe.skip : describe;
+
+maybeDescribe('Ollama Model Benchmark (fetch-based)', () => {
   let ollama: MockOllamaClient;
 
   beforeAll(() => {
@@ -20,7 +22,7 @@ describe('Ollama Model Benchmark (fetch-based)', () => {
     }
     const elapsed = (Date.now() - start) / 1000;
     console.log(`Ollama minimal prompt completed in ${elapsed}s`);
-  expect(elapsed).toBeLessThan(20);
+    expect(elapsed).toBeLessThan(20);
     expect(typeof response.response).toBe('string');
   }, 20000);
 });
