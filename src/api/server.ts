@@ -6,7 +6,7 @@
 import { LeetifyAPIClient } from '../services/leetify/index.js';
 import { IAICoachService } from '../services/ollama/interface.js';
 import { NoOpAIService } from '../services/ollama/noop.js'
-import { LeetifyDataTransformer } from '../services/analysis/leetify-data-transformer.js';
+import { LeetifyDataTransformer } from '../services/analysis/index.js';
 
 // Handlers
 import { CoachingHandler } from '../handlers/coachingHandler.js';

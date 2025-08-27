@@ -3,7 +3,7 @@
  * Tests statistical correlation analysis with validated mathematical methods
  */
 
-import { CorrelationAnalyzer } from '../../../../src/services/analysis';
+import { CorrelationAnalyzer } from '../../../../src/services/analysis/index.js';
 import { createValidExtendedMatchData } from '../../../test-data';
 
 describe('CorrelationAnalyzer', () => {

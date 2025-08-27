@@ -3,7 +3,7 @@
  * Tests basic functionality and ensures no crashes
  */
 
-import { PatternDetector } from '../../../../src/services/analysis';
+import { PatternDetector } from '../../../../src/services/analysis/index.js';
 import { createValidExtendedMatchData } from '../../../test-data.js';
 
 describe('PatternDetector - Basic Tests', () => {

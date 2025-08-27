@@ -2,7 +2,7 @@ import {
   mapPremierRatingToRank, 
   AdaptiveThresholds,
   createAdaptiveThresholds 
-} from '../../../../src/services/analysis/adaptive-thresholds';
+} from '../../../../src/services/analysis/index.js';
 
 describe('AdaptiveThresholds', () => {
   describe('mapPremierRatingToRank', () => {

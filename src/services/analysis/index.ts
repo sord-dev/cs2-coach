@@ -1,14 +1,14 @@
 // Baseline calculation and management (migrated from baseline/)
 
-export * from './baseline';
-export * from './baseline-storage';
-export * from './leetify-data-transformer';
-export * from './adaptive-thresholds';
-export * from './area';
-export * from './correlation-analyzer';
-export * from './metrics';
-export * from './pattern-detector';
-export * from './state-classifier';
+export * from './baseline.js';
+export * from './baseline-storage.js';
+export * from './leetify-data-transformer.js';
+export * from './adaptive-thresholds.js';
+export * from './area.js';
+export * from './correlation-analyzer.js';
+export * from './metrics.js';
+export * from './pattern-detector.js';
+export * from './state-classifier.js';
 
 // Export tiltDetector singleton for unified import style
 export { tiltDetector } from './tilt-detector.js';

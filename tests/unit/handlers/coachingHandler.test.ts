@@ -2,7 +2,7 @@
 import { CoachingHandler } from '../../../src/handlers/coachingHandler';
 import { LeetifyAPIClient } from '../../../src/services/leetify/index';
 import { OllamaCoachService } from '../../../src/services/ollama/index';
-import { LeetifyDataTransformer } from '../../../src/services/analysis/LeetifyDataTransformer';
+import { LeetifyDataTransformer } from '../../../src/services/analysis/index.js';
 import {
   mockPlayerProfile,
   createAnalysis
@@ -10,7 +10,7 @@ import {
 
 jest.mock('../../../src/services/leetify/index');
 jest.mock('../../../src/services/ollama/index');
-jest.mock('../../../src/services/analysis/LeetifyDataTransformer');
+jest.mock('../../../src/services/analysis/index.js');
 
 describe('CoachingHandler', () => {
   let handler: CoachingHandler;

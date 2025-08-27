@@ -4,7 +4,7 @@ import { makeRawPlayerStats } from '../../../test-data';
  * Tests basic functionality and ensures no crashes
  */
 
-import { PerformanceStateClassifier } from '../../../../src/services/analysis';
+import { PerformanceStateClassifier } from '../../../../src/services/analysis/index.js';
 import type { PerformanceTrend } from '../../../../src/types/analysis';
 
 describe('PerformanceStateClassifier - Basic Tests', () => {

@@ -1,4 +1,4 @@
-import { BaselineStorageManager } from '../../../../src/services/analysis';
+import { BaselineStorageManager } from '../../../../src/services/analysis/index.js';
 import { createValidExtendedMatchData } from '../../../test-data';
 
 describe('BaselineStorageManager', () => {

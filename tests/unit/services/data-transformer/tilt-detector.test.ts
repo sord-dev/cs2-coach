@@ -3,7 +3,7 @@
  * Tests tilt detection with research-validated thresholds and patterns
  */
 
-import { tiltDetector } from '../../../../src/services/analysis';
+import { tiltDetector } from '../../../../src/services/analysis/index.js';
 import { makeRawPlayerStats } from '../../../test-data';
 
 describe('TiltDetector', () => {

@@ -4,7 +4,7 @@
  */
 import { describe, it, expect } from '@jest/globals';
 import { mockPlayerProfile, mockMatchHistory } from '../test-data';
-import { personalBaselineCalculator, correlationAnalyzer, patternDetector, performanceStateClassifier, tiltDetector } from '../../src/services/analysis';
+import { personalBaselineCalculator, correlationAnalyzer, patternDetector, performanceStateClassifier, tiltDetector } from '../../src/services/analysis/index.js';
 
 // Helper to check for valid numbers (not NaN, not Infinity)
 function isValidNumber(val: any) {

@@ -2,7 +2,7 @@ import fetch from 'node-fetch';
 
 import { OllamaCoachService } from '../../src/services/ollama/index';
 import { LeetifyAPIClient } from '../../src/services/leetify/index';
-import { LeetifyDataTransformer } from '../../src/services/analysis';
+import { LeetifyDataTransformer } from '../../src/services/analysis/index.js';
 import { mockPlayerProfile, mockMatchHistory, mockAIResponse } from '../test-data';
 
 jest.mock('node-fetch');

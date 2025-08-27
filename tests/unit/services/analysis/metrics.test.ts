@@ -1,4 +1,4 @@
-import { calculateMatchPerformance, calculateExtendedMatchPerformance, calculateAverageStats, getDefaultStats } from '../../../../src/services/analysis/metrics';
+import { calculateMatchPerformance, calculateExtendedMatchPerformance, calculateAverageStats, getDefaultStats } from '../../../../src/services/analysis/index.js';
 import { createValidLeetifyMatchData } from '../../../test-data';
 
 describe('metrics.ts', () => {

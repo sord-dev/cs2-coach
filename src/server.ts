@@ -12,7 +12,7 @@ import { LeetifyAPIClient } from './services/leetify/index.js';
 import { OllamaCoachService } from './services/ollama/index.js';
 import { NoOpAIService } from './services/ollama/noop.js';
 import { IAICoachService } from './services/ollama/interface.js';
-import { LeetifyDataTransformer } from './services/analysis';
+import { LeetifyDataTransformer } from './services/analysis/index.js';
 import { CoachingHandler } from './handlers/coachingHandler.js';
 import { AreaAnalysisHandler } from './handlers/areaAnalysisHandler.js';
 import { ImprovementHandler } from './handlers/improvementHandler.js';
